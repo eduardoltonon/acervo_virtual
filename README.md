@@ -1,8 +1,6 @@
 <div align="center">
-  <img width="300" alt="acervo" src="capa-readme.png" />
+  <img width="420" alt="acervo" src="capa-readme.png" />
 </div>
-
-# 📚 Acervo Virtual
 
 O **Acervo Virtual** é um sistema completo de gestão bibliotecária desenvolvido em **Python (Django)**. Projetado para otimizar o dia a dia de bibliotecas, o sistema permite que administradores e bibliotecários gerenciem o acervo de livros, estoques físicos (tombos), leitores, empréstimos, devoluções, reservas e até mesmo o controle financeiro de multas por atraso.
 
