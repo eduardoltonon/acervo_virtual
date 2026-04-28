@@ -1,5 +1,5 @@
 <div align="center">
-  <img width="300" alt="acervo" src="https://github.com/user-attachments/assets/cdfa1969-f283-4e9e-a822-b8e1bee88dc2" />
+  <img width="300" alt="acervo" src="capa-readme.png" />
 </div>
 
 # 📚 Acervo Virtual
