@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Novo Funcionário | Acervo Virtual{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold text-dark mb-1"><i class="fa-solid fa-user-plus me-2 text-primary"></i> Cadastrar Funcionário</h4>
+            <p class="text-muted small mb-0">Crie uma nova conta com permissões de acesso</p>
+        </div>
+        <a href="{% url 'configuracao_contas' %}" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
+    </div>
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="form-action" value="cadastro-usuario">
+                <div class="row g-4">
+                    <div class="col-md-6"><label class="form-label fw-bold">Nome de Usuário (Login)</label><input type="text" name="username" class="form-control" required></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">Senha de Acesso</label><input type="password" name="password" class="form-control" required></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">E-mail</label><input type="email" name="email" class="form-control" required></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">CPF</label><input type="text" name="cpf" class="form-control" placeholder="Apenas números" required></div>
+                    <div class="col-md-8"><label class="form-label fw-bold">Endereço Completo</label><input type="text" name="endereco" class="form-control" required></div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold text-danger">Função (Permissões de Sistema)</label>
+                        <select name="funcao" class="form-select border-danger" required>
+                            <option value="" selected disabled>Selecione uma função...</option>
+                            <option value="administrador">Administrador (Acesso Total)</option>
+                            <option value="bibliotecario">Bibliotecário (Catálogo e Circulação)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-5 text-end">
+                    <button type="submit" class="btn btn-primary px-5 py-2"><i class="fa-solid fa-check me-2"></i> Criar Conta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

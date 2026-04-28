@@ -1,0 +1,5 @@
+{
+  "chat.tools.terminal.autoApproveWorkspaceNpmScripts": false,
+  "files.autoSave": "afterDelay",
+  "files.autoSaveWorkspaceFilesOnly": true
+}

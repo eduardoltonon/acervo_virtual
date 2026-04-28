@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Visão Geral | Acervo Virtual{% endblock %}
+
+{% block content %}
+<style>
+    .card-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; }
+    .card-hover:hover { transform: translateY(-5px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
+</style>
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold text-dark mb-1"><i class="fa-solid fa-chart-pie me-2 text-primary"></i> Visão Geral</h4>
+            <p class="text-muted small mb-0">Visão geral e estatísticas do sistema</p>
+        </div>
+        <span class="text-muted">Bem-vindo(a), <strong>{{ request.user.username|title }}</strong>!</span>
+    </div>
+
+    <div class="row g-4">
+        <!-- Card 1 -->
+        <div class="col-md-4">
+            <a href="{% url 'estoque' %}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 card-hover">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center me-3" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fa-solid fa-book"></i>
+                        </div>
+                        <div>
+                            <h6 class="card-title text-muted mb-1">Livros no Acervo</h6>
+                            <h3 class="fw-bold mb-0 text-dark">{{ total_livros }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="col-md-4">
+            <a href="{% url 'reservas' %}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 card-hover">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="bg-warning text-dark rounded-circle d-flex justify-content-center align-items-center me-3" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </div>
+                        <div>
+                            <h6 class="card-title text-muted mb-1">Empréstimos Ativos</h6>
+                            <h3 class="fw-bold mb-0 text-dark">{{ emprestimos_ativos }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="col-md-4">
+            <a href="{% url 'multa' %}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 card-hover">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="bg-danger text-white rounded-circle d-flex justify-content-center align-items-center me-3" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div>
+                            <h6 class="card-title text-muted mb-1">Devoluções Atrasadas</h6>
+                            <h3 class="fw-bold mb-0 text-dark">{{ devolucoes_atrasadas }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                    <h5 class="fw-bold"><i class="fa-solid fa-clock-rotate-left text-secondary me-2"></i> Atividades Recentes</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted text-center my-5">O histórico de atividades de locação e devolução aparecerá aqui.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

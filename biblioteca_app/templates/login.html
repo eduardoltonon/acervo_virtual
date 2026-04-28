@@ -1,0 +1,128 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Acervo Virtual</title>
+    <link rel="icon" href="{% static 'img/gato-icon.png' %}" type="image/png" sizes="512x512">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .login-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-card { border: none; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 900px; width: 100%; }
+        
+        /* PALETA DE CORES CUSTOMIZADA */
+        :root {
+            --theme-dark: #2c3136;
+            --theme-primary: #9ed5cb;
+            --theme-secondary: #cca77b;
+        }
+        
+        /* Estilização de Botões e Inputs */
+        .btn-primary { background-color: var(--theme-primary); border-color: var(--theme-primary); color: var(--theme-dark); font-weight: 600; }
+        .btn-primary:hover, .btn-primary:focus { background-color: #8ac0b6; border-color: #8ac0b6; color: var(--theme-dark); }
+        .form-control:focus { box-shadow: 0 0 0 0.25rem rgba(158, 213, 203, 0.4); border-color: var(--theme-primary); }
+        .input-group-text i { color: #4e8c80; } /* Verde escurecido para dar contraste no fundo branco */
+        .texto-tema { color: var(--theme-dark) !important; }
+        .link-tema { color: #4e8c80; font-weight: 500; text-decoration: none; transition: 0.2s; }
+        .link-tema:hover { color: var(--theme-dark); text-decoration: underline; }
+        
+        /* Configuração da imagem de fundo com overlay escuro e área de partículas */
+        .login-image { 
+            background: linear-gradient(rgba(15, 32, 39, 0.7), rgba(32, 58, 67, 0.8)), url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80') center/cover; 
+            min-height: 400px; 
+            position: relative;
+            overflow: hidden;
+        }
+        #tsparticles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        .login-texto-animado { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2; width: 80%; text-align: center; color: white; pointer-events: none;}
+        
+        .logo-img { max-height: 150px; max-width: 100%; height: auto; object-fit: contain; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div class="login-container px-3">
+        <div class="card login-card">
+            <div class="row g-0">
+                <!-- Lado Esquerdo: Animação Iterativa -->
+                <div class="col-md-6 login-image d-none d-md-block">
+                    <div id="tsparticles"></div>
+                    <div class="login-texto-animado">
+                        <h2 class="fw-bold mb-3">Gerencie o Conhecimento</h2>
+                        <p class="fs-5 text-light opacity-75">Uma plataforma completa para organização, circulação e controle do seu acervo bibliotecário.</p>
+                    </div>
+                </div>
+                
+                <!-- Lado Direito: Formulário de Login -->
+                <div class="col-md-6 bg-white p-5 d-flex flex-column justify-content-center">
+                    <div class="text-center mb-4">
+                        <img src="{% static 'img/logo.png' %}" alt="Acervo Virtual Logo" class="logo-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3389/3389081.png'">
+                        <p class="texto-tema fw-bold opacity-75">Acesso restrito à gestão bibliotecária</p>
+                    </div>
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show text-center" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="POST" action="{% url 'login_view' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold texto-tema">Usuário</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-user"></i></span>
+                                <input type="text" name="username" class="form-control border-start-0 bg-light" required>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold texto-tema">Senha</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-lock"></i></span>
+                                <input type="password" id="password" name="password" class="form-control border-start-0 bg-light" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold fs-5 shadow-sm">Entrar no Sistema</button>
+                        <div class="text-center mt-3">
+                            <a href="{% url 'password_reset' %}" class="link-tema small">Esqueceu sua senha?</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Biblioteca de Partículas -->
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2/tsparticles.bundle.min.js"></script>
+    <script>
+        tsParticles.load("tsparticles", {
+            fpsLimit: 60,
+            interactivity: {
+                events: {
+                    onHover: { enable: true, mode: "repulse" }, // Faz as partículas fugirem do mouse
+                    resize: true,
+                },
+                modes: {
+                    repulse: { distance: 100, duration: 0.4 },
+                },
+            },
+            particles: {
+                color: { value: "#ffffff" },
+                links: { color: "#ffffff", distance: 150, enable: true, opacity: 0.4, width: 1 },
+                move: { enable: true, speed: 1.5, direction: "none", random: false, straight: false, outModes: "out" },
+                number: { density: { enable: true, area: 800 }, value: 60 },
+                opacity: { value: 0.5 },
+                shape: { type: "circle" },
+                size: { value: { min: 1, max: 3 } },
+            },
+            detectRetina: true,
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalhes do Livro | Acervo Virtual{% endblock %}
+
+{% block content %}
+<style>
+    .main-image-container { cursor: zoom-in; }
+    .main-image-container:hover .zoom-icon { opacity: 1 !important; transform: scale(1.1); }
+    .zoom-icon { transition: all 0.2s ease; background-color: rgba(255,255,255,0.8); border-radius: 50%; padding: 10px; }
+    .thumbnail-gallery img { opacity: 0.6; transition: 0.2s ease; border: 2px solid transparent; cursor: pointer; }
+    .thumbnail-gallery img:hover, .thumbnail-gallery img.active { opacity: 1; border-color: var(--theme-primary); }
+</style>
+<div class="container-fluid">
+    <div class="card border-0 shadow-sm book-item"
+         data-livro-id="{{ livro.id }}"
+         data-livro-titulo="{{ livro.titulo }}"
+         data-autor="{{ livro.autor }}"
+         data-genero="{{ livro.genero }}"
+         data-edicao="{{ livro.edicao }}"
+         data-numero-paginas="{{ livro.numero_paginas }}"
+         data-classificacao="{{ livro.classificacao }}"
+         data-sinopse="{{ livro.sinopse }}"
+         data-quantidade="{{ livro.exemplares.count }}"
+         data-idioma="{{ livro.idioma }}"
+         data-editora="{{ livro.editora.nome|default:'' }}"
+         data-data-publicacao="{{ livro.data_publicacao|date:'Y-m-d'|default:'' }}"
+         data-capa="{% if livro.capa %}{{ livro.capa.url }}{% endif %}">
+        <div class="card-body p-5">
+            <div class="row">
+                <div class="col-md-4 text-center">
+                    <!-- Imagem Principal com Zoom -->
+                    <div class="position-relative d-inline-block main-image-container mb-3" onclick="abrirLightbox()">
+                        {% if livro.capa %}
+                        <img id="imagemPrincipal" src="{{ livro.capa.url }}" class="img-fluid rounded shadow" alt="Capa" style="max-height: 400px; object-fit: contain;">
+                        <div class="position-absolute top-50 start-50 translate-middle zoom-icon opacity-0 shadow-sm"><i class="fa-solid fa-magnifying-glass-plus fa-2x text-dark"></i></div>
+                        {% else %}
+                        <div id="imagemPrincipalPlaceholder" class="bg-light rounded d-flex align-items-center justify-content-center shadow mx-auto" style="height: 350px; width: 250px;"><i class="fa-solid fa-image text-muted fa-4x"></i></div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Galeria de Miniaturas (Thumbnails) -->
+                    <div class="d-flex justify-content-center gap-2 flex-wrap thumbnail-gallery">
+                        {% if livro.capa %}
+                        <img src="{{ livro.capa.url }}" class="rounded shadow-sm active" style="width: 60px; height: 80px; object-fit: cover;" onclick="trocarImagem(this.src, this)">
+                        {% endif %}
+                        {% for img in livro.imagens_adicionais.all %}
+                        <img src="{{ img.imagem.url }}" class="rounded shadow-sm" style="width: 60px; height: 80px; object-fit: cover;" onclick="trocarImagem(this.src, this)">
+                        {% endfor %}
+                    </div>
+                    <div class="mt-4">
+                        {% if disponivel %}
+                        <span class="badge bg-success px-4 py-2 fs-6 shadow-sm rounded-pill"><i class="fa-solid fa-check-circle me-1"></i> Disponível</span>
+                        {% else %}
+                        <span class="badge bg-danger px-4 py-2 fs-6 shadow-sm rounded-pill"><i class="fa-solid fa-times-circle me-1"></i> Indisponível</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-8 px-md-4">
+                    <h2 class="fw-bold text-dark mb-2">{{ livro.titulo }}</h2>
+                    <h5 class="text-primary mb-4">{{ livro.autor }}</h5>
+                    <hr>
+                    <div class="row mb-4 fs-6 text-muted">
+                        <div class="col-sm-6 mb-2"><i class="fa-solid fa-tags me-2"></i> <strong>Gênero:</strong> {{ livro.genero }}</div>
+                        <div class="col-sm-6 mb-2"><i class="fa-solid fa-star me-2 text-warning"></i> <strong>Classificação:</strong> {{ livro.classificacao }}</div>
+                        <div class="col-sm-6 mb-2"><i class="fa-solid fa-bookmark me-2"></i> <strong>Edição:</strong> {{ livro.edicao }}</div>
+                        <div class="col-sm-6 mb-2"><i class="fa-solid fa-file-lines me-2"></i> <strong>Páginas:</strong> {{ livro.numero_paginas }}</div>
+                        <div class="col-sm-6 mb-2"><i class="fa-solid fa-map-pin me-2 text-danger"></i> <strong>Localização:</strong> {{ livro.localizacao|default:"Não definida" }}</div>
+                    </div>
+                    <h5 class="fw-bold mt-4">Sinopse da Obra</h5>
+                    <div class="sinopse-container">
+                        <p class="text-secondary fs-6 mb-1" id="sinopse-text" style="line-height: 1.8; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;">{{ livro.sinopse }}</p>
+                        <button class="btn btn-link p-0 text-decoration-none fw-bold mb-3 link-tema" id="btn-ler-mais" onclick="toggleSinopse()">Ler mais <i class="fa-solid fa-chevron-down ms-1"></i></button>
+                    </div>
+                    {% if not disponivel and data_devolucao_proxima %}
+                    <div class="alert alert-warning mt-4 fs-5"><i class="fa-solid fa-clock me-2"></i> A data mais próxima prevista para devolução de um exemplar é: <strong class="text-dark">{{ data_devolucao_proxima|date:"d/m/Y" }}</strong></div>
+                    {% endif %}
+                    <div class="mt-5 border-top pt-4 d-flex flex-wrap justify-content-between gap-3">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a href="{% url 'estoque' %}" class="btn btn-outline-secondary fs-6 px-4 py-2"><i class="fa-solid fa-arrow-left me-2"></i> Voltar ao Catálogo</a>
+                            {% if disponivel %}
+                            <a href="{% url 'emprestimo_com_livro' livro.id %}" class="btn btn-primary fs-6 px-4 py-2"><i class="fa-solid fa-hand-holding-hand me-2"></i> Realizar Empréstimo</a>
+                            {% endif %}
+                        </div>
+                        
+                        {% if request.session.funcao == 'administrador' or request.user.is_superuser %}
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="button" class="btn btn-outline-secondary fs-6 px-4 py-2 btn-editar"><i class="fa-solid fa-pen me-2"></i> Editar</button>
+                            <form method="POST" action="{% url 'excluir_livro' livro.id %}" class="mb-0">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger fs-6 px-4 py-2 btn-excluir"><i class="fa-solid fa-trash me-2"></i> Excluir</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mt-5">
+                        <h5 class="fw-bold mb-3"><i class="fa-solid fa-barcode me-2 text-primary"></i> Exemplares Físicos (Tombos)</h5>
+                        <div class="table-responsive border rounded shadow-sm">
+                            <table class="table table-hover align-middle mb-0 text-center">
+                                <thead class="table-light">
+                                    <tr><th>Código de Tombo (ID)</th><th>Status de Circulação</th><th>Conservação</th></tr>
+                                </thead>
+                                <tbody>
+                                    {% for exemplar in exemplares %}
+                                    <tr>
+                                        <td><strong class="text-primary">{{ exemplar.codigo_tombo }}</strong></td>
+                                        <td>
+                                            {% if exemplar.status == 'disponivel' %}<span class="badge bg-success px-3 py-2">Disponível</span>
+                                            {% elif exemplar.status == 'emprestado' %}<span class="badge bg-warning text-dark px-3 py-2">Emprestado</span>
+                                            {% else %}<span class="badge bg-danger px-3 py-2">{{ exemplar.get_status_display }}</span>{% endif %}
+                                        </td>
+                                        <td>{{ exemplar.estado_conservacao }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDIÇÃO (Disponível apenas para renderizar se for acionado) -->
+<div id="modal-edicao" class="modal fade" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold">Editar Livro</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="form-edicao" method="post" enctype="multipart/form-data">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" id="livro-id-edicao" name="livro_id">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">Título</label><input type="text" id="titulo-edicao" name="titulo-edicao" class="form-control"></div>
+                        <div class="col-md-6"><label class="form-label">Autor</label><input type="text" id="autor-edicao" name="autor-edicao" class="form-control"></div>
+                        
+                        <div class="col-md-4"><label class="form-label">Gênero</label><input type="text" id="genero-edicao" name="genero-edicao" class="form-control"></div>
+                        <div class="col-md-4"><label class="form-label">Editora</label><input type="text" id="editora-edicao" name="editora-edicao" class="form-control"></div>
+                        <div class="col-md-4">
+                            <label class="form-label">Idioma</label>
+                            <select id="idioma-edicao" name="idioma-edicao" class="form-select">
+                                <option value="Português">Português</option>
+                                <option value="Inglês">Inglês</option>
+                                <option value="Espanhol">Espanhol</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3"><label class="form-label">Classificação</label><input type="number" id="classificacao-edicao" name="classificacao-edicao" class="form-control"></div>
+                        <div class="col-md-3"><label class="form-label">Edição</label><input type="text" id="edicao-edicao" name="edicao-edicao" class="form-control"></div>
+                        <div class="col-md-3"><label class="form-label">Páginas</label><input type="number" id="numero_paginas-edicao" name="numero_paginas-edicao" class="form-control"></div>
+                        <div class="col-md-3"><label class="form-label">Data Pub.</label><input type="date" id="data_publicacao-edicao" name="data_publicacao-edicao" class="form-control"></div>
+                        
+                        <div class="col-12"><label class="form-label">Sinopse</label><textarea id="sinopse-edicao" name="sinopse-edicao" class="form-control" rows="3"></textarea></div>
+                        <div class="col-md-6">
+                            <label class="form-label d-block">Capa atual</label>
+                            <img id="capa-preview" src="" alt="Capa atual" class="img-thumbnail shadow-sm" style="max-height: 120px;">
+                        </div>
+                        <div class="col-md-6"><label class="form-label">Nova Capa (opcional)</label><input type="file" id="capa-nova-edicao" name="capa-nova-edicao" class="form-control"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL LIGHTBOX (Zoom da Imagem) -->
+<div class="modal fade" id="lightboxModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content bg-transparent border-0">
+      <div class="modal-header border-0 pb-0">
+        <button type="button" class="btn-close btn-close-white ms-auto bg-light" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center pt-0">
+        <img id="lightboxImage" src="" class="img-fluid rounded shadow-lg" style="max-height: 85vh; object-fit: contain;">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Move os modais para o body para evitar problemas de tela escura do Bootstrap
+    const lightboxModal = document.getElementById('lightboxModal');
+    if (lightboxModal) document.body.appendChild(lightboxModal);
+    
+    const modalEdicao = document.getElementById('modal-edicao');
+    if (modalEdicao) document.body.appendChild(modalEdicao);
+});
+
+function trocarImagem(src, element) {
+    const imgPrincipal = document.getElementById('imagemPrincipal');
+    if (imgPrincipal) {
+        imgPrincipal.src = src;
+    }
+    document.querySelectorAll('.thumbnail-gallery img').forEach(el => el.classList.remove('active'));
+    element.classList.add('active');
+}
+
+function abrirLightbox() {
+    const imgPrincipal = document.getElementById('imagemPrincipal');
+    if(!imgPrincipal || !imgPrincipal.src) return;
+    
+    document.getElementById('lightboxImage').src = imgPrincipal.src;
+    const modalEl = document.getElementById('lightboxModal');
+    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    modal.show();
+}
+
+function toggleSinopse() {
+    const texto = document.getElementById('sinopse-text');
+    const btn = document.getElementById('btn-ler-mais');
+    if (texto.style.display === '-webkit-box') {
+        texto.style.display = 'block';
+        btn.innerHTML = 'Ler menos <i class="fa-solid fa-chevron-up ms-1"></i>';
+    } else {
+        texto.style.display = '-webkit-box';
+        btn.innerHTML = 'Ler mais <i class="fa-solid fa-chevron-down ms-1"></i>';
+    }
+}
+</script>
+{% endblock %}

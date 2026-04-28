@@ -1,0 +1,156 @@
+html, body {
+    margin: 0 ;
+    padding: 0 ;
+    height: 100vh;
+    width: 100%;
+    overflow-x: hidden; 
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.login-container {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    align-items: stretch; 
+}
+
+.login-form-box {
+    width: 360px; 
+    background-color: white;
+    padding: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0; 
+}
+
+.login-image {
+    flex: 1; 
+    background-image: url("../img/fundo.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin: 0; 
+}
+
+.login-logo {
+    width: 220px;
+    margin-bottom: 10px;
+}
+
+.login-form-box h2 {
+    margin-bottom: 25px;
+    color: #2d2b2f;
+    font-size: 34px;
+    margin-top: 0; 
+}
+
+.login-form-box form {
+    width: 100%;
+}
+
+.login-form-box input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid black;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.form-group {
+    position: relative;
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-group i {
+    position: absolute;
+    right: 12px;
+    top: 36px;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.form-group i:hover {
+    color: #1C0B1B;
+}
+
+.login-form-box button[type="submit"].btn {
+    background-color: #1C0B1B;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 20px;
+    width: 100%;
+    transition: background-color 0.3s ease;
+}
+
+.login-form-box button[type="submit"].btn:hover {
+    background-color: #655964;
+}
+
+.forgot-password {
+    margin-top: 12px;
+    text-align: center;
+}
+
+.forgot-password a {
+    color: #1C0B1B;
+    font-size: 16px;
+    text-decoration: none;
+}
+
+.forgot-password a:hover {
+    text-decoration: underline;
+}
+
+ul.messages {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    html, body {
+        overflow-y: auto;
+    }
+
+    .login-container {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .login-form-box {
+        width: 100%;
+        height: 100vh; 
+        padding: 30px;
+    }
+
+    .login-image {
+        display: none; 
+    }
+
+    .login-logo {
+        width: 250px;
+    }
+
+    .login-form-box h2 {
+        font-size: 28px;
+    }
+}

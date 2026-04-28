@@ -1,0 +1,311 @@
+.configuracoes-main {
+    border-radius: 8px;
+    padding-top: 100px; 
+    padding-left: 30px; 
+}
+
+.configuracoes-conteudo {
+    flex-grow: 1;
+    padding: 30px;
+    max-width: 900px; 
+    margin: 0 auto; 
+}
+
+.configuracoes-main p {
+    font-size: 20px;
+}
+
+.config-content {
+    display: none;
+}
+
+.config-content:target {
+    display: block;
+}
+
+.tabela-config {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.tabela-config th,
+.tabela-config td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+.tabela-config thead th {
+    background-color: #ddd;
+}
+
+.btn-excluir {
+    background-color: #9b2c37;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-left: 5px;
+}
+
+.btn-excluir:hover {
+    background-color: #8693ab;
+}
+
+.btn-editar {
+    background-color: #1C325B;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-left: 5px;
+}
+
+.btn-editar:hover {
+    background-color: #8693ab;
+}
+
+.modal-editar form {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.btn-cancelar,
+.btn-alteracoes {
+    width: 100%;
+    padding: 10px 40px;
+    border-radius: 4px;
+    font-size: 16px;
+    margin-top: 15px;
+    cursor: pointer;
+    color: white;
+    border: none;
+    transition: background-color 0.2s;
+}
+
+.btn-cancelar {
+    background-color: #9b2c37;
+}
+
+.btn-cancelar:hover {
+    background-color: #8693ab;
+}
+
+.btn-alteracoes {
+    background-color: #1C325B;
+}
+
+.btn-alteracoes:hover {
+    background-color: #8693ab;
+}
+
+
+#modal-editar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#modal-editar .modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 22px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: #9b2c37;
+}
+
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    color: #333;
+}
+
+.form-group input::placeholder,
+.form-group select option:first-child {
+    color: #999;
+}
+
+.form-group input[type="file"] {
+    padding: 6px;
+    background-color: #e9e9e9;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+
+.btn {
+    background-color: #1C325B;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 20px;
+    width: 100%;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #8693ab;
+}
+
+/*RESPONSIVE*/
+@media (max-width: 768px) {
+    main.configuracoes-main {
+        margin-right: 0;
+        padding-top: 80px;
+        padding-left: 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .configuracoes-conteudo {
+        max-width: none;
+        width: 100%;
+        margin: 0 auto;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+    
+    .tabela-config {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .tabela-config th,
+    .tabela-config td {
+        padding: 10px;
+        font-size: 15px;
+    }
+    
+    #modal-editar .modal-content,
+    .modall-content {
+        width: 90%;
+        max-width: 450px;
+        margin: 15% auto;
+    }
+
+    .modal-editar form {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .btn-cancelar,
+    .btn-alteracoes {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .configuracoes-conteudo {
+        padding: 10px;
+    }
+    
+    .configuracoes-conteudo h3 {
+        font-size: 20px;
+    }
+    
+    .tabela-config {
+        display: block;
+        overflow-x: hidden;
+    }
+
+    .tabela-config thead {
+        display: none;
+    }
+
+    .tabela-config tbody tr {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px;
+        background-color: #fefefe;
+    }
+    
+    .tabela-config tbody tr:nth-child(even) {
+        background-color: #fefefe;
+    }
+
+    .tabela-config tbody td {
+        display: block;
+        border: none;
+        padding: 5px 0;
+        position: relative; 
+        padding-left: 100px;
+        white-space: normal; 
+        text-align: left;
+    }
+    
+    .tabela-config tbody td::before {
+        content: ''; 
+        position: absolute;
+        top: 5px;
+        left: 0;
+        font-weight: bold;
+        color: #555;
+        width: 95px;
+    }
+    
+    .tabela-config tbody td:nth-child(1) { grid-column: 1 / -1; font-weight: bold; padding-left: 0; }
+    .tabela-config tbody td:nth-child(2)::before { content: "Função:"; } 
+    .tabela-config tbody td:nth-child(3) { grid-column: 1 / -1; padding: 10px 0 0 0; text-align: center; } 
+    
+    .tabela-config tbody td:nth-child(3) button,
+    .tabela-config tbody td:nth-child(3) form {
+        display: inline-block;
+        margin: 5px;
+    }
+    
+    #modal-editar .modal-content,
+    .modall-content {
+        margin: 30% auto;
+        width: 95%;
+        padding: 15px;
+    }
+}

@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatório de Empréstimos | Acervo Virtual{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold text-dark mb-1"><i class="fa-solid fa-chart-line me-2 text-primary"></i> Relatório de Empréstimos</h4>
+            <p class="text-muted small mb-0">Métricas de locação e popularidade dos livros</p>
+        </div>
+    </div>
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm bg-primary text-white h-100">
+                <div class="card-body">
+                    <h6 class="card-title text-white-50">Total de Empréstimos Realizados</h6>
+                    <h2 class="fw-bold mb-0">{{ total_emprestimos_feitos }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm bg-success text-white h-100">
+                <div class="card-body">
+                    <h6 class="card-title text-white-50">Livros Devolvidos</h6>
+                    <h2 class="fw-bold mb-0">{{ total_devolvidos }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm bg-info text-white h-100">
+                <div class="card-body">
+                    <h6 class="card-title text-white-50">Taxa de Devolução</h6>
+                    <h2 class="fw-bold mb-0">{{ percentual_devolvidos }}%</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white pt-4 pb-2 border-bottom-0 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0">Livros Mais Locados</h5>
+            <form action="{% url 'relatorio' %}" method="GET" class="d-flex w-50">
+                <input type="text" name="q" value="{{ request.GET.q|default:'' }}" class="form-control form-control-sm me-2" placeholder="Filtrar por título, autor ou gênero...">
+                <button type="submit" class="btn btn-sm btn-primary"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+        </div>
+        <div class="card-body p-0 table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Título do Livro</th>
+                        <th>Autor</th>
+                        <th>Gênero</th>
+                        <th class="text-center">Vezes Emprestado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for livro in livros_emprestados %}
+                    <tr>
+                        <td><strong>{{ livro.titulo }}</strong></td>
+                        <td>{{ livro.autor }}</td>
+                        <td>{{ livro.genero }}</td>
+                        <td class="text-center"><span class="badge bg-secondary fs-6">{{ livro.total_emprestimos }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center py-4 text-muted">Nenhum livro foi locado ainda.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Buscar Leitores | Acervo Virtual{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold text-dark mb-1"><i class="fa-solid fa-users me-2 text-primary"></i> Leitores Cadastrados</h4>
+            <p class="text-muted small mb-0">Consulte, edite ou remova usuários do acervo</p>
+        </div>
+        <a href="{% url 'cadastro_leitor' %}" class="btn btn-primary"><i class="fa-solid fa-user-plus"></i> Novo Leitor</a>
+    </div>
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form action="{% url 'leitores' %}" method="GET" class="d-flex mb-0">
+                <input type="text" name="q" value="{{ request.GET.q|default:'' }}" class="form-control me-2" placeholder="Pesquisar por leitor ou email...">
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
+            </form>
+        </div>
+    </div>
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0 table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID (Matrícula)</th>
+                        <th>Nome do Leitor</th>
+                        <th>Email</th>
+                        <th>Multas Pendentes</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leitor in leitores %}
+                    <tr class="leitor-item" style="cursor: pointer;" onclick="window.location.href='{% url 'historico_leitor' leitor.id %}'" data-leitor-id="{{ leitor.id }}" data-id-leitor="{{ leitor.id_leitor|default:'' }}" data-nome="{{ leitor.nome }}" data-celular="{{ leitor.celular }}" data-email="{{ leitor.email }}" data-cep="{{ leitor.cep }}" data-endereco="{{ leitor.endereco }}" data-complemento="{{ leitor.complemento }}" data-cidade="{{ leitor.cidade }}">
+                        <td class="text-primary fw-bold">{{ leitor.id_leitor|default:"-" }}</td>
+                        <td><strong>{{ leitor.nome }}</strong></td>
+                        <td>{{ leitor.email }}</td>
+                        <td>
+                            {% if leitor.possui_multa %}<span class="badge bg-danger">Sim</span>{% else %}<span class="badge bg-success">Não</span>{% endif %}
+                        </td>
+                        <td onclick="event.stopPropagation();">
+                            {% if request.session.funcao == 'administrador' or request.user.is_superuser %}
+                            <button type="button" class="btn btn-sm btn-outline-secondary btn-editar" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                            <form method="POST" action="{% url 'excluir_leitor' leitor.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger btn-excluir" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center py-4 text-muted">Nenhum leitor encontrado.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Edição Leitor -->
+    <div class="modal fade" id="modal-edicao-leitor" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold">Editar Dados do Leitor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-edicao-leitor" method="post" action="">
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <input type="hidden" id="leitor-id-edicao" name="leitor_id">
+                        <div class="row g-3">
+                            <div class="col-md-4"><label class="form-label">ID (Matrícula)</label><input type="text" id="id_leitor-edicao" name="id_leitor-edicao" class="form-control"></div>
+                            <div class="col-md-8"><label class="form-label">Nome Completo</label><input type="text" id="nome-edicao" name="nome-edicao" class="form-control"></div>
+                            <div class="col-md-6"><label class="form-label">Celular</label><input type="text" id="celular-edicao" name="celular-edicao" class="form-control"></div>
+                            <div class="col-md-6"><label class="form-label">E-mail</label><input type="email" id="email-edicao" name="email-edicao" class="form-control"></div>
+                            <div class="col-md-6"><label class="form-label">CEP</label><input type="text" id="cep-edicao" name="cep-edicao" class="form-control"></div>
+                            <div class="col-md-12"><label class="form-label">Endereço</label><input type="text" id="endereco-edicao" name="endereco-edicao" class="form-control"></div>
+                            <div class="col-md-6"><label class="form-label">Complemento</label><input type="text" id="complemento-edicao" name="complemento-edicao" class="form-control"></div>
+                            <div class="col-md-6"><label class="form-label">Cidade</label><input type="text" id="cidade-edicao" name="cidade-edicao" class="form-control"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

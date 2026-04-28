@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Novo Empréstimo | Acervo Virtual{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold text-dark mb-1"><i class="fa-solid fa-bookmark me-2 text-primary"></i> Registrar Empréstimo</h4>
+            <p class="text-muted small mb-0">Vincule um exemplar disponível a um leitor cadastrado</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center d-flex flex-column align-items-center justify-content-center">
+                    <img id="livro-capa" src="{% if livro_pre_selecionado and livro_pre_selecionado.capa %}{{ livro_pre_selecionado.capa.url }}{% endif %}" alt="Capa" class="img-fluid rounded shadow mb-3" style="max-height: 200px; {% if not livro_pre_selecionado.capa %}display: none;{% endif %}">
+                    <div id="livro-details" class="w-100 text-start">
+                        <h5 id="livro-titulo" class="fw-bold">{% if livro_pre_selecionado %}{{ livro_pre_selecionado.titulo }}{% else %}Nenhum livro selecionado{% endif %}</h5>
+                        <p id="livro-autor" class="text-muted mb-1">{% if livro_pre_selecionado %}{{ livro_pre_selecionado.autor }}{% endif %}</p>
+                        <p id="livro-genero" class="mb-1 text-secondary">{% if livro_pre_selecionado %}Gênero: {{ livro_pre_selecionado.genero }}{% endif %}</p>
+                        <p id="livro-edicao" class="mb-1 text-secondary">{% if livro_pre_selecionado %}Edição: {{ livro_pre_selecionado.edicao }}{% endif %}</p>
+                        <p id="livro-classificacao" class="mb-1 text-secondary fw-bold text-primary">{% if livro_pre_selecionado %}Classificação: {{ livro_pre_selecionado.classificacao }}{% endif %}</p>
+                        <p id="exemplar-tombo" class="mt-2 mb-0 text-danger fw-bold fs-5"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <form id="form-emprestimo" method="post" action="{% url 'emprestimo' %}">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">ID do Leitor (Matrícula)</label>
+                                <input type="text" id="id_leitor" name="id_leitor" class="form-control form-control-lg border-primary" placeholder="Ex: MAT1234" required autofocus>
+                            </div>
+                            <div class="col-md-6 d-flex flex-column justify-content-center">
+                                <div class="mt-2 text-primary fw-bold" id="leitor-nome"></div>
+                                <div class="small fw-bold" id="multa-info"></div>
+                            </div>
+                            <div class="col-12 mt-4">
+                                <label class="form-label fw-bold">Código de Tombo (Livro)</label>
+                                <input list="lista-tombos" type="text" id="codigo_tombo" name="codigo_tombo" class="form-control form-control-lg border-danger" placeholder="Escaneie ou digite o código do exemplar" required>
+                                <datalist id="lista-tombos">
+                                    {% if livro_pre_selecionado %}
+                                        {% for exemplar in exemplares_disponiveis %}<option value="{{ exemplar.codigo_tombo }}">{{ exemplar.codigo_tombo }} ({{ livro_pre_selecionado.titulo }})</option>{% endfor %}
+                                    {% endif %}
+                                </datalist>
+                            </div>
+                            <div class="col-md-6 mt-4">
+                                <label class="form-label fw-bold">Data do Empréstimo</label>
+                                <input type="date" id="data_emprestimo" name="data_emprestimo" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mt-4">
+                                <label class="form-label fw-bold text-danger">Data de Devolução Prevista</label>
+                                <input type="date" id="data_devolucao" name="data_devolucao" class="form-control" required>
+                            </div>
+                        </div>
+                        <hr class="my-4">
+                        <div class="d-flex justify-content-end">
+                            <button type="button" class="btn btn-outline-secondary me-2 btn-limpar" onclick="document.getElementById('form-emprestimo').reset()">Limpar Formulário</button>
+                            <button type="submit" class="btn btn-primary px-4"><i class="fa-solid fa-check me-2"></i> Confirmar Empréstimo</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-livro-indisponivel" class="modal" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title fw-bold text-dark">Atenção: Livro Indisponível</h5>
+                    <button type="button" class="btn-close fechar-modal"></button>
+                </div>
+                <div class="modal-body"><p id="mensagem-indisponivel" class="fs-5 mb-0"></p></div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary fechar-modal">Fechar</button></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const dtEmp = document.getElementById('data_emprestimo');
+        const dtDev = document.getElementById('data_devolucao');
+        if (dtEmp && dtDev) {
+            const hoje = new Date();
+            dtEmp.value = hoje.toISOString().split('T')[0];
+            hoje.setDate(hoje.getDate() + 14);
+            dtDev.value = hoje.toISOString().split('T')[0];
+        }
+    });
+</script>
+{% endblock %}

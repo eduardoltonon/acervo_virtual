@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+
+{% block title %}Buscar Livros | Acervo Virtual{% endblock %}
+
+{% block content %}
+<style>
+    /* Efeito profissional de hover nos cards de livros */
+    .book-item { transition: all 0.2s ease-in-out; }
+    .book-item:hover { 
+        filter: brightness(0.95); /* Cria o efeito de "acizentar/escurecer" a cor */
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; /* Aumenta a sombra */
+        transform: translateY(-2px); /* Dá a leve sensação de "pular" para o clique */
+    }
+</style>
+<div class="container-fluid">
+    <div class="mb-3">
+        <h5 class="fw-bold text-secondary"><i class="fa-solid fa-magnifying-glass me-2 text-primary"></i> Campo de busca</h5>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+            <form action="{% url 'estoque' %}" method="GET" class="d-flex w-100 mb-0 gap-2">
+                <select name="filtro" class="form-select form-select-sm" style="max-width: 180px;">
+                    <option value="livre" {% if filtro == 'livre' or not filtro %}selected{% endif %}>Termo Livre</option>
+                    <option value="titulo" {% if filtro == 'titulo' %}selected{% endif %}>Título</option>
+                    <option value="autor" {% if filtro == 'autor' %}selected{% endif %}>Autor</option>
+                    <option value="editora" {% if filtro == 'editora' %}selected{% endif %}>Editora</option>
+                    <option value="genero" {% if filtro == 'genero' %}selected{% endif %}>Gênero</option>
+                </select>
+                <input type="text" name="q" value="{{ query|default:'' }}" class="form-control form-control-sm" placeholder="Digite sua pesquisa..." id="buscar">
+                <button type="submit" class="btn btn-primary btn-sm px-4"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
+            </form>
+            
+            <!-- Botões de Modo de Visualização -->
+            <div class="btn-group shadow-sm flex-shrink-0" role="group" aria-label="Modo de Visualização">
+                <input type="radio" class="btn-check" name="view-mode" id="btn-table" value="table" autocomplete="off" checked>
+                <label class="btn btn-outline-primary btn-sm px-3" for="btn-table" title="Tabela"><i class="fa-solid fa-table-list"></i></label>
+
+                <input type="radio" class="btn-check" name="view-mode" id="btn-list" value="list" autocomplete="off">
+                <label class="btn btn-outline-primary btn-sm px-3" for="btn-list" title="Lista Detalhada"><i class="fa-solid fa-list"></i></label>
+
+                <input type="radio" class="btn-check" name="view-mode" id="btn-grid" value="grid" autocomplete="off">
+                <label class="btn btn-outline-primary btn-sm px-3" for="btn-grid" title="Grade de Capas"><i class="fa-solid fa-border-all"></i></label>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 1: TABELA -->
+    <div id="view-table" class="card border-0 shadow-sm view-section">
+        <div class="card-body p-0 table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Título</th>
+                        <th>Autor</th>
+                        <th>Total</th>
+                        <th>Disponíveis</th>
+                        <th>Emprestados</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for livro in livros %}
+                    <tr class="book-item" style="cursor: pointer;" onclick="window.location.href='{% url 'livro_detalhes' livro.id %}'" data-livro-id="{{ livro.id }}" data-livro-titulo="{{ livro.titulo }}" data-autor="{{ livro.autor }}"
+                        data-genero="{{ livro.genero }}" data-edicao="{{ livro.edicao }}"
+                        data-numero-paginas="{{ livro.numero_paginas }}" data-classificacao="{{ livro.classificacao }}"
+                        data-sinopse="{{ livro.sinopse }}" data-quantidade="{{ livro.total_exemplares }}"
+                        data-idioma="{{ livro.idioma }}" data-editora="{{ livro.editora.nome|default:'' }}"
+                        data-data-publicacao="{{ livro.data_publicacao|date:'Y-m-d'|default:'' }}"
+                        data-capa="{% if livro.capa %}{{ livro.capa.url }}{% endif %}">
+                        <td><strong>{{ livro.titulo }}</strong></td>
+                        <td>{{ livro.autor }}</td>
+                        <td><span class="badge bg-secondary fs-6">{{ livro.total_exemplares }}</span></td>
+                        <td><span class="badge bg-success fs-6">{{ livro.disponiveis }}</span></td>
+                        <td><span class="badge bg-warning text-dark fs-6">{{ livro.emprestados }}</span></td>
+                        <td onclick="event.stopPropagation();">
+                            {% if request.session.funcao == 'administrador' or request.user.is_superuser %}
+                            <button type="button" class="btn btn-sm btn-outline-secondary btn-editar" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                            <form method="POST" action="{% url 'excluir_livro' livro.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger btn-excluir" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">Nenhum livro encontrado no acervo.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- VIEW 2: LISTA DETALHADA -->
+    <div id="view-list" class="view-section d-none">
+        <div class="d-flex flex-column gap-3">
+            {% for livro in livros %}
+            <div class="card border-0 shadow-sm book-item" style="cursor: pointer;" onclick="window.location.href='{% url 'livro_detalhes' livro.id %}'" data-livro-id="{{ livro.id }}" data-livro-titulo="{{ livro.titulo }}" data-autor="{{ livro.autor }}" data-genero="{{ livro.genero }}" data-edicao="{{ livro.edicao }}" data-numero-paginas="{{ livro.numero_paginas }}" data-classificacao="{{ livro.classificacao }}" data-sinopse="{{ livro.sinopse }}" data-quantidade="{{ livro.total_exemplares }}" data-idioma="{{ livro.idioma }}" data-editora="{{ livro.editora.nome|default:'' }}" data-data-publicacao="{{ livro.data_publicacao|date:'Y-m-d'|default:'' }}" data-capa="{% if livro.capa %}{{ livro.capa.url }}{% endif %}">
+                <div class="row g-0 align-items-center">
+                    <div class="col-md-2 text-center p-3">
+                        {% if livro.capa %}
+                            <img src="{{ livro.capa.url }}" class="img-fluid rounded shadow-sm" style="max-height: 140px; object-fit: contain;">
+                        {% else %}
+                            <div class="bg-light rounded d-flex align-items-center justify-content-center shadow-sm mx-auto" style="height: 140px; width: 100px;"><i class="fa-solid fa-book fa-3x text-muted"></i></div>
+                        {% endif %}
+                    </div>
+                    <div class="col p-3">
+                        <h4 class="fw-bold text-dark mb-1">{{ livro.titulo }}</h4>
+                        <h6 class="text-primary mb-3">{{ livro.autor }}</h6>
+                        <div class="d-none d-md-block mb-2">
+                            <p class="text-muted small mb-1" style="display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;">{{ livro.sinopse }}</p>
+                            <button type="button" class="btn btn-link p-0 text-decoration-none fw-bold small text-primary" onclick="toggleSinopseList(this); event.stopPropagation();">Ler mais <i class="fa-solid fa-chevron-down ms-1"></i></button>
+                        </div>
+                        <div class="d-flex gap-2 mt-2">
+                            <span class="badge bg-light text-dark border"><i class="fa-solid fa-tags text-muted"></i> {{ livro.genero }}</span>
+                            <span class="badge bg-secondary">Total: {{ livro.total_exemplares }}</span>
+                            <span class="badge {% if livro.disponiveis > 0 %}bg-success{% else %}bg-danger{% endif %}">Disp: {{ livro.disponiveis }}</span>
+                        </div>
+                    </div>
+                    {% if request.session.funcao == 'administrador' or request.user.is_superuser %}
+                    <div class="col-md-2 border-start d-flex flex-row flex-md-column justify-content-center align-items-center p-3 gap-2 h-100" onclick="event.stopPropagation();">
+                        <button type="button" class="btn btn-outline-secondary btn-editar w-100" title="Editar"><i class="fa-solid fa-pen me-1"></i> Editar</button>
+                        <form method="POST" action="{% url 'excluir_livro' livro.id %}" class="w-100 mb-0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger btn-excluir w-100" title="Excluir"><i class="fa-solid fa-trash me-1"></i> Excluir</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-4 text-muted w-100">Nenhum livro encontrado no acervo.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- VIEW 3: GRADE (CARDS) -->
+    <div id="view-grid" class="view-section d-none">
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4">
+            {% for livro in livros %}
+            <div class="col">
+                <div class="card h-100 border-0 shadow-sm book-item" style="cursor: pointer;" onclick="window.location.href='{% url 'livro_detalhes' livro.id %}'" data-livro-id="{{ livro.id }}" data-livro-titulo="{{ livro.titulo }}" data-autor="{{ livro.autor }}" data-genero="{{ livro.genero }}" data-edicao="{{ livro.edicao }}" data-numero-paginas="{{ livro.numero_paginas }}" data-classificacao="{{ livro.classificacao }}" data-sinopse="{{ livro.sinopse }}" data-quantidade="{{ livro.total_exemplares }}" data-idioma="{{ livro.idioma }}" data-editora="{{ livro.editora.nome|default:'' }}" data-data-publicacao="{{ livro.data_publicacao|date:'Y-m-d'|default:'' }}" data-capa="{% if livro.capa %}{{ livro.capa.url }}{% endif %}">
+                    <div class="position-relative">
+                        {% if livro.capa %}
+                            <img src="{{ livro.capa.url }}" class="card-img-top p-3 rounded-4" style="height: 250px; object-fit: cover;">
+                        {% else %}
+                            <div class="bg-light rounded-4 d-flex align-items-center justify-content-center m-3 shadow-sm" style="height: 220px;"><i class="fa-solid fa-image fa-4x text-muted"></i></div>
+                        {% endif %}
+                        <span class="position-absolute top-0 end-0 m-3 badge {% if livro.disponiveis > 0 %}bg-success{% else %}bg-danger{% endif %} shadow">{{ livro.disponiveis }} disp.</span>
+                    </div>
+                    <div class="card-body text-center p-3 pt-0">
+                        <h6 class="fw-bold mb-1 text-truncate" title="{{ livro.titulo }}">{{ livro.titulo }}</h6>
+                        <p class="text-primary small mb-0">{{ livro.autor }}</p>
+                    </div>
+                    {% if request.session.funcao == 'administrador' or request.user.is_superuser %}
+                    <div class="card-footer bg-white border-0 d-flex justify-content-center gap-2 pb-3" onclick="event.stopPropagation();">
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-editar" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <form method="POST" action="{% url 'excluir_livro' livro.id %}" class="mb-0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger btn-excluir" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-4 text-muted">Nenhum livro encontrado no acervo.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- MODAL EDIÇÃO -->
+    <div class="modal fade" id="modal-edicao" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold">Editar Livro</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-edicao" method="post" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <input type="hidden" id="livro-id-edicao" name="livro_id">
+                        <div class="row g-3">
+                            <div class="col-md-6"><label class="form-label">Título</label><input type="text" id="titulo-edicao" name="titulo-edicao" class="form-control"></div>
+                            <div class="col-md-6"><label class="form-label">Autor</label><input type="text" id="autor-edicao" name="autor-edicao" class="form-control"></div>
+                        
+                        <div class="col-md-4"><label class="form-label">Gênero</label><input type="text" id="genero-edicao" name="genero-edicao" class="form-control"></div>
+                        <div class="col-md-4"><label class="form-label">Editora</label><input type="text" id="editora-edicao" name="editora-edicao" class="form-control"></div>
+                        <div class="col-md-4">
+                            <label class="form-label">Idioma</label>
+                            <select id="idioma-edicao" name="idioma-edicao" class="form-select">
+                                <option value="Português">Português</option>
+                                <option value="Inglês">Inglês</option>
+                                <option value="Espanhol">Espanhol</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3"><label class="form-label">Classificação</label><input type="number" id="classificacao-edicao" name="classificacao-edicao" class="form-control"></div>
+                        <div class="col-md-3"><label class="form-label">Edição</label><input type="text" id="edicao-edicao" name="edicao-edicao" class="form-control"></div>
+                        <div class="col-md-3"><label class="form-label">Páginas</label><input type="number" id="numero_paginas-edicao" name="numero_paginas-edicao" class="form-control"></div>
+                        <div class="col-md-3"><label class="form-label">Data Pub.</label><input type="date" id="data_publicacao-edicao" name="data_publicacao-edicao" class="form-control"></div>
+                        
+                            <div class="col-12"><label class="form-label">Sinopse</label><textarea id="sinopse-edicao" name="sinopse-edicao" class="form-control" rows="3"></textarea></div>
+                            <div class="col-md-6">
+                                <label class="form-label d-block">Capa atual</label>
+                                <img id="capa-preview" src="" alt="Capa atual" class="img-thumbnail shadow-sm" style="max-height: 120px;">
+                            </div>
+                            <div class="col-md-6"><label class="form-label">Nova Capa (opcional)</label><input type="file" id="capa-nova-edicao" name="capa-nova-edicao" class="form-control"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleSinopseList(btn) {
+    const texto = btn.previousElementSibling;
+    if (texto.style.display === '-webkit-box') {
+        texto.style.display = 'block';
+        btn.innerHTML = 'Ler menos <i class="fa-solid fa-chevron-up ms-1"></i>';
+    } else {
+        texto.style.display = '-webkit-box';
+        btn.innerHTML = 'Ler mais <i class="fa-solid fa-chevron-down ms-1"></i>';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const radios = document.querySelectorAll('input[name="view-mode"]');
+    const sections = {
+        'table': document.getElementById('view-table'),
+        'list': document.getElementById('view-list'),
+        'grid': document.getElementById('view-grid')
+    };
+
+    const savedView = localStorage.getItem('estoqueViewMode') || 'table';
+    
+    function applyView(viewType) {
+        Object.values(sections).forEach(sec => { if(sec) sec.classList.add('d-none'); });
+        if(sections[viewType]) sections[viewType].classList.remove('d-none');
+        const targetRadio = document.getElementById('btn-' + viewType);
+        if(targetRadio) targetRadio.checked = true;
+    }
+
+    applyView(savedView);
+
+    radios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            applyView(e.target.value);
+            localStorage.setItem('estoqueViewMode', e.target.value);
+        });
+    });
+});
+</script>
+{% endblock %}

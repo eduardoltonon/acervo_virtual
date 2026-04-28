@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Novo Leitor | Acervo Virtual{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold text-dark mb-1"><i class="fa-solid fa-address-card me-2 text-primary"></i> Cadastrar Leitor</h4>
+            <p class="text-muted small mb-0">Registre um novo leitor para permitir empréstimos</p>
+        </div>
+    </div>
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <form method="post" action="{% url 'cadastro_leitor' %}">
+                {% csrf_token %}
+                <div class="row g-4">
+                    <div class="col-md-4"><label class="form-label fw-bold">ID do Leitor (Matrícula)</label><input type="text" name="id_leitor" class="form-control" placeholder="Cód. Único" required></div>
+                    <div class="col-md-8"><label class="form-label fw-bold">Nome Completo</label><input type="text" name="nome" class="form-control" required></div>
+                    <div class="col-md-3"><label class="form-label fw-bold">CPF</label><input type="text" name="cpf" class="form-control" placeholder="Apenas números" required></div>
+                    <div class="col-md-3"><label class="form-label fw-bold">Data de Nascimento</label><input type="date" name="data_nascimento" class="form-control" required></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">E-mail</label><input type="email" name="email" class="form-control" required></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">Celular</label><input type="tel" name="celular" class="form-control" required></div>
+                    <div class="col-md-3"><label class="form-label fw-bold">CEP</label><input type="text" id="cep" name="cep" class="form-control" required></div>
+                    <div class="col-md-9"><label class="form-label fw-bold">Endereço</label><input type="text" id="endereco" name="endereco" class="form-control bg-light" readonly></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">Complemento</label><input type="text" id="complemento" name="complemento" class="form-control"></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">Cidade / Estado</label><input type="text" id="cidade" name="cidade" class="form-control bg-light" readonly></div>
+                    
+                    <div class="col-12 mt-4">
+                        <label class="form-label d-block fw-bold mb-3"><i class="fa-solid fa-bell text-warning"></i> Preferência de Alertas</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="recebimento_alertas" id="alerta_email" value="email" checked>
+                            <label class="form-check-label" for="alerta_email">E-mail</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="recebimento_alertas" id="alerta_celular" value="celular">
+                            <label class="form-check-label" for="alerta_celular">Celular (SMS/WhatsApp)</label>
+                        </div>
+                    </div>
+
+                    <!-- Câmera para Foto do Leitor -->
+                    <div class="col-12 mt-4">
+                        <label class="form-label fw-bold text-dark"><i class="fa-solid fa-camera text-primary me-2"></i>Foto do Leitor (Opcional)</label>
+                        <div class="d-flex flex-column align-items-center bg-light p-4 rounded shadow-sm border">
+                            <video id="video-camera" width="320" height="240" class="border rounded shadow-sm d-none" style="object-fit: cover;" autoplay></video>
+                            <canvas id="canvas-foto" width="320" height="240" class="d-none"></canvas>
+                            <img id="img-preview" class="border rounded shadow-sm d-none mb-2" width="320" height="240" style="object-fit: cover;">
+                            
+                            <div class="mt-3 d-flex gap-2">
+                                <button type="button" id="btn-abrir-camera" class="btn btn-outline-primary fw-bold px-4">
+                                    <i class="fa-solid fa-camera me-2"></i> Abrir Câmera
+                                </button>
+                                <button type="button" id="btn-capturar-foto" class="btn btn-primary fw-bold px-4 d-none">
+                                    <i class="fa-solid fa-bolt me-2"></i> Bater Foto
+                                </button>
+                                <button type="button" id="btn-refazer-foto" class="btn btn-outline-secondary fw-bold px-4 d-none">
+                                    <i class="fa-solid fa-rotate-right me-2"></i> Refazer
+                                </button>
+                            </div>
+                            <input type="hidden" name="foto_base64" id="foto_base64">
+                            <small class="text-muted mt-2 text-center" id="dica-camera">A imagem será vinculada automaticamente à matrícula do leitor.</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 text-end">
+                    <button type="submit" class="btn btn-primary px-5 py-2"><i class="fa-solid fa-save me-2"></i> Cadastrar Leitor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const video = document.getElementById('video-camera');
+    const canvas = document.getElementById('canvas-foto');
+    const imgPreview = document.getElementById('img-preview');
+    const btnAbrir = document.getElementById('btn-abrir-camera');
+    const btnCapturar = document.getElementById('btn-capturar-foto');
+    const btnRefazer = document.getElementById('btn-refazer-foto');
+    const inputFotoBase64 = document.getElementById('foto_base64');
+    let stream = null;
+
+    // 1. Abrir Câmera
+    btnAbrir.addEventListener('click', async function() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+            video.srcObject = stream;
+            video.classList.remove('d-none');
+            btnAbrir.classList.add('d-none');
+            btnCapturar.classList.remove('d-none');
+            imgPreview.classList.add('d-none');
+        } catch (err) {
+            alert("Permissão negada ou câmera não encontrada. Verifique as permissões do navegador.");
+        }
+    });
+
+    // 2. Tirar Foto
+    btnCapturar.addEventListener('click', function() {
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        inputFotoBase64.value = dataUrl;
+        imgPreview.src = dataUrl;
+        video.classList.add('d-none');
+        imgPreview.classList.remove('d-none');
+        btnCapturar.classList.add('d-none');
+        btnRefazer.classList.remove('d-none');
+        if(stream) { stream.getTracks().forEach(track => track.stop()); }
+    });
+
+    // 3. Refazer Foto
+    btnRefazer.addEventListener('click', async function() {
+        inputFotoBase64.value = ""; 
+        btnRefazer.classList.add('d-none');
+        btnAbrir.click(); 
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Funcionários | Acervo Virtual{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold text-dark mb-1"><i class="fa-solid fa-user-tie me-2 text-primary"></i> Funcionários do Sistema</h4>
+            <p class="text-muted small mb-0">Gerencie os acessos de bibliotecários e administradores</p>
+        </div>
+        <a href="{% url 'configuracao_cadastro' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Novo Funcionário</a>
+    </div>
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0 table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nome de Usuário</th>
+                        <th>E-mail</th>
+                        <th>Função</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios_cadastrados %}
+                    <tr>
+                        <td><strong>{{ usuario.username }}</strong></td>
+                        <td>{{ usuario.email }}</td>
+                        <td><span class="badge bg-dark fs-6">{{ usuario.perfil.funcao|title }}</span></td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-editar" title="Editar Permissões" data-id="{{ usuario.id }}" data-email="{{ usuario.email }}" data-endereco="{{ usuario.perfil.endereco|default:'' }}"><i class="fa-solid fa-pen"></i></button>
+                            <form method="POST" action="{% url 'excluir_usuario' usuario.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger btn-excluir" title="Desativar"><i class="fa-solid fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center py-4">Nenhum funcionário encontrado.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Editar -->
+    <div id="modal-editar" class="modal" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold">Editar Dados do Funcionário</h5>
+                    <button type="button" class="btn-close" onclick="fecharModal()"></button>
+                </div>
+                <form method="POST">
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <input type="hidden" name="form-action" value="editar-usuario">
+                        <input type="hidden" id="usuario_id" name="usuario_id">
+                        <div class="mb-3"><label class="form-label fw-bold">E-mail</label><input type="email" id="modal-email" name="email" class="form-control" required></div>
+                        <div class="mb-3"><label class="form-label fw-bold">Endereço</label><input type="text" id="modal-endereco" name="endereco" class="form-control" required></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" onclick="fecharModal()" class="btn btn-secondary">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
