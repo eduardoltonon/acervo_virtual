@@ -80,6 +80,8 @@ class Leitor(models.Model):
 
     @property
     def possui_multa(self):
+        if hasattr(self, 'tem_multa_anotada'):
+            return self.tem_multa_anotada
         hoje = timezone.now().date()
         return Emprestimo.objects.filter(leitor=self, data_devolucao__lt=hoje, devolucao__isnull=True).exists()
 

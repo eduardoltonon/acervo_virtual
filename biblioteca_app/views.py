@@ -1,4 +1,4 @@
-from django.db.models import Q, Count, F, Sum
+from django.db.models import Q, Count, F, Sum, Exists, OuterRef
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import IntegrityError
@@ -16,6 +16,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LogoutView
 from .decorators import admin_required
 from . import services
+from .forms import LeitorForm, LivroCadastroForm
 
 # --- Funções Auxiliares (Regras de Negócio Extraídas) ---
 def _validar_cpf(cpf):
@@ -191,7 +192,7 @@ def configuracao_cadastro(request):
     return render(request, 'cadastro.html')
 
 def livro_detalhes(request, livro_id):
-    livro = get_object_or_404(Livro, pk=livro_id)
+    livro = get_object_or_404(Livro.objects.select_related('autor', 'genero', 'editora').prefetch_related('exemplares', 'imagens_adicionais'), pk=livro_id)
     
     emprestimos_ativos = Emprestimo.objects.filter(exemplar__livro=livro, devolucao__isnull=True).count()
     disponivel = Exemplar.objects.filter(livro=livro, status='disponivel').exists()
@@ -212,23 +213,18 @@ def livro_detalhes(request, livro_id):
 
 def cadastro_livros(request):
     if request.method == 'POST':
-        services.criar_livro_com_exemplares(
-            titulo=request.POST.get('titulo'),
-            autor_nome=request.POST.get('autor'),
-            edicao=request.POST.get('edicao'),
-            numero_paginas=request.POST.get('numero_paginas'),
-            genero_nome=request.POST.get('genero'),
-            classificacao=request.POST.get('classificacao'),
-            sinopse=request.POST.get('sinopse'),
-            capa=request.FILES.get('capa'),
-            imagens_adicionais=request.FILES.getlist('imagens_adicionais'),
-            quantidade=int(request.POST.get('quantidade', 1)),
-            editora_nome=request.POST.get('editora'),
-            idioma=request.POST.get('idioma'),
-            data_publicacao=request.POST.get('data_publicacao') or None,
-            localizacao=request.POST.get('localizacao')
-        )
-        messages.success(request, 'Livro cadastrado com sucesso!')
+        form = LivroCadastroForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                imagens_adicionais = request.FILES.getlist('imagens_adicionais')
+                form.save(imagens_adicionais=imagens_adicionais)
+                messages.success(request, 'Livro cadastrado com sucesso!')
+            except Exception as e:
+                messages.error(request, f'Erro interno ao cadastrar livro: {str(e)}', extra_tags="erro")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, error, extra_tags="erro")
     
     context = {
         'quantidades': range(1, 51),
@@ -299,7 +295,7 @@ def estoque(request):
     query = request.GET.get('q', '').strip()
     filtro = request.GET.get('filtro', 'livre')
     
-    livros_base = Livro.objects.all()
+    livros_base = Livro.objects.select_related('autor', 'editora', 'genero').all()
 
     if query:
         if filtro == 'titulo':
@@ -334,58 +330,22 @@ def estoque(request):
 
 def cadastro_leitor(request):
     if request.method == 'POST':
-        id_leitor_post = request.POST.get('id_leitor')
-        email_post = request.POST.get('email')
-        cpf_post = request.POST.get('cpf') 
-        
-        cpf_limpo = ''.join(filter(str.isdigit, str(cpf_post))) 
-
-        if not _validar_cpf(cpf_limpo):
-            messages.error(request, 'CPF inválido. Verifique os números digitados.', extra_tags="erro")
-            return redirect('cadastro_leitor')
-            
-        if Leitor.objects.filter(id_leitor=id_leitor_post).exists():
-            messages.error(request, 'Este ID de Leitor já está cadastrado no sistema.', extra_tags="erro")
-            return redirect('cadastro_leitor')
- 
-        if Leitor.objects.filter(email=email_post).exists():
-            messages.error(request, 'Este endereço de e-mail já está cadastrado para outro leitor.', extra_tags="erro")
-            return redirect('cadastro_leitor')
-        
-        if Leitor.objects.filter(cpf=cpf_limpo).exists():
-            messages.error(request, 'Este CPF já está cadastrado para outro leitor.', extra_tags="erro")
-            return redirect('cadastro_leitor')
-
-
-        novo_leitor = Leitor()
-        novo_leitor.id_leitor = id_leitor_post
-        novo_leitor.nome = request.POST.get('nome')
-        novo_leitor.data_nascimento = request.POST.get('data_nascimento')
-        novo_leitor.celular = request.POST.get('celular')
-        novo_leitor.cpf = cpf_limpo
-        novo_leitor.email = email_post
-        novo_leitor.cep = request.POST.get('cep')
-        novo_leitor.endereco = request.POST.get('endereco')
-        novo_leitor.complemento = request.POST.get('complemento')
-        novo_leitor.cidade = request.POST.get('cidade')
-        novo_leitor.recebimento_alertas = 'recebimento_alertas' in request.POST
-        
-        # Verifica se uma foto foi tirada via câmera (Base64)
-        foto_base64 = request.POST.get('foto_base64')
-        if foto_base64:
+        form = LeitorForm(request.POST)
+        if form.is_valid():
             try:
-                format, imgstr = foto_base64.split(';base64,')
-                ext = format.split('/')[-1]
-                novo_leitor.foto.save(f"leitor_{cpf_limpo}.{ext}", ContentFile(base64.b64decode(imgstr)), save=False)
-            except Exception as e:
-                messages.warning(request, f'Aviso: Não foi possível processar a foto da câmera ({str(e)}).')
-
-        try:
-            novo_leitor.save()
-            messages.success(request, 'Leitor cadastrado com sucesso!', extra_tags="sucesso")
-        except IntegrityError:
-            messages.error(request, 'Erro de integridade no banco de dados (Ex: CPF ou Email duplicado).', extra_tags="erro")
-        
+                form.save()
+                messages.success(request, 'Leitor cadastrado com sucesso!', extra_tags="sucesso")
+                
+                # Caso tenha tido algum problema com a foto capturada
+                if hasattr(form, 'foto_aviso') and form.foto_aviso:
+                    messages.warning(request, form.foto_aviso)
+            except IntegrityError:
+                messages.error(request, 'Erro de integridade no banco de dados (Ex: CPF ou Email duplicado).', extra_tags="erro")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, error, extra_tags="erro")
+                    
         return redirect('cadastro_leitor')
     
     return render(request, 'cadastro_leitor.html')
@@ -428,14 +388,25 @@ def excluir_leitor(request, leitor_id):
 
 def usuarios(request):
     query = request.GET.get('q')
+    hoje = timezone.now().date()
+    
+    subquery_multa = Emprestimo.objects.filter(
+        leitor=OuterRef('pk'),
+        data_devolucao__lt=hoje,
+        devolucao__isnull=True
+    )
+    
+    leitores_base = Leitor.objects.annotate(
+        tem_multa_anotada=Exists(subquery_multa)
+    )
     
     if query:
-        leitores = Leitor.objects.filter(
+        leitores = leitores_base.filter(
             Q(nome__icontains=query) |
             Q(email__icontains=query)
         ).distinct()
     else:
-        leitores = Leitor.objects.all()
+        leitores = leitores_base.all()
 
     context = {
         'leitores': leitores,
@@ -512,7 +483,7 @@ def emprestimo_com_livro(request, livro_id):
 def reservas(request):
     query = request.GET.get('q') 
     
-    emprestimos_base = Emprestimo.objects.exclude(
+    emprestimos_base = Emprestimo.objects.select_related('leitor', 'exemplar__livro').exclude(
         pk__in=Devolucao.objects.values('emprestimo_id')
     )
     
@@ -623,7 +594,7 @@ def multa(request):
     devolucoes_com_multa = []
     hoje = date.today()
     
-    emprestimos_atrasados = Emprestimo.objects.filter(
+    emprestimos_atrasados = Emprestimo.objects.select_related('leitor', 'exemplar__livro').filter(
         data_devolucao__lt=hoje, 
         devolucao__isnull=True
     )
