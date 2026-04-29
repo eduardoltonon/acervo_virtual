@@ -1,7 +1,11 @@
-# Ambientes Virtuais
+# Arquivos de Ambiente e Segurança
+.env
 venv/
-env/
 
-# Cache do Python
+# Banco de Dados local
+db.sqlite3
+
+# Arquivos de cache do Python
 __pycache__/
 *.pyc
+*.pyo

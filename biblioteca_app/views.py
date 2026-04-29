@@ -17,6 +17,28 @@ from django.contrib.auth.views import LogoutView
 from .decorators import admin_required
 from . import services
 
+# --- Funções Auxiliares (Regras de Negócio Extraídas) ---
+def _validar_cpf(cpf):
+    cpf = ''.join(filter(str.isdigit, str(cpf)))
+    if len(cpf) != 11 or len(set(cpf)) == 1:
+        return False
+    for i in range(9, 11):
+        value = sum((int(cpf[num]) * ((i+1) - num) for num in range(0, i)))
+        digit = ((value * 10) % 11) % 10
+        if digit != int(cpf[i]):
+            return False
+    return True
+
+def _calcular_valor_multa(emprestimo, data_base=None):
+    if not data_base:
+        data_base = date.today()
+    config = Configuracao.objects.first()
+    valor_por_dia = decimal.Decimal(str(config.multa_por_dia)) if config else decimal.Decimal('2.50')
+    if data_base > emprestimo.data_devolucao:
+        dias_atraso = (data_base - emprestimo.data_devolucao).days
+        return valor_por_dia * dias_atraso
+    return decimal.Decimal('0.00')
+
 def login_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -316,10 +338,10 @@ def cadastro_leitor(request):
         email_post = request.POST.get('email')
         cpf_post = request.POST.get('cpf') 
         
-        cpf_limpo = ''.join(filter(str.isdigit, cpf_post)) 
+        cpf_limpo = ''.join(filter(str.isdigit, str(cpf_post))) 
 
-        if len(cpf_limpo) != 11:
-            messages.error(request, 'O CPF deve conter exatamente 11 dígitos.', extra_tags="erro")
+        if not _validar_cpf(cpf_limpo):
+            messages.error(request, 'CPF inválido. Verifique os números digitados.', extra_tags="erro")
             return redirect('cadastro_leitor')
             
         if Leitor.objects.filter(id_leitor=id_leitor_post).exists():
@@ -505,16 +527,10 @@ def reservas(request):
 
     hoje = date.today()
 
-    config = Configuracao.objects.first()
-    valor_por_dia = config.multa_por_dia if config else decimal.Decimal('2.50')
-
     for emprestimo in emprestimos_ativos:
-        emprestimo.atrasado = emprestimo.data_devolucao < hoje
-        if emprestimo.atrasado:
-            dias_atraso = (hoje - emprestimo.data_devolucao).days
-            emprestimo.valor_multa = f"{(dias_atraso * valor_por_dia):.2f}"
-        else:
-            emprestimo.valor_multa = "0.00"
+        valor_multa = _calcular_valor_multa(emprestimo, hoje)
+        emprestimo.atrasado = valor_multa > 0
+        emprestimo.valor_multa = f"{valor_multa:.2f}"
 
     context = {
         'emprestimos': emprestimos_ativos
@@ -535,15 +551,8 @@ def calcular_multa(request):
         else:
             data_entrega = datetime.date.today() 
         
-        config = Configuracao.objects.first()
-        valor_por_dia = config.multa_por_dia if config else decimal.Decimal('2.50')
-        valor_multa = decimal.Decimal('0.00')
-        atraso = False
-        
-        if data_entrega > emprestimo.data_devolucao:
-            atraso = True
-            dias_atraso = (data_entrega - emprestimo.data_devolucao).days
-            valor_multa = dias_atraso * valor_por_dia
+        valor_multa = _calcular_valor_multa(emprestimo, data_entrega)
+        atraso = valor_multa > 0
 
         return JsonResponse({
             'valor_multa': f'{valor_multa:.2f}',
@@ -564,14 +573,7 @@ def devolver_livro(request, emprestimo_id):
             messages.error(request, "Data de entrega inválida.")
             return redirect("reservas")
 
-        config = Configuracao.objects.first()
-        valor_por_dia = decimal.Decimal(str(config.multa_por_dia)) if config else decimal.Decimal('2.50') 
-        dias_atraso = (data_entrega - emprestimo.data_devolucao).days
-        
-        if dias_atraso > 0:
-            multa_devida = valor_por_dia * dias_atraso
-        else:
-            multa_devida = decimal.Decimal('0.00')
+        multa_devida = _calcular_valor_multa(emprestimo, data_entrega)
 
         multa_foi_paga = False
         valor_a_registrar = multa_devida 
@@ -618,9 +620,6 @@ def multa(request):
     else:
         livros_base = Livro.objects.all()
 
-    config = Configuracao.objects.first()
-    valor_por_dia = config.multa_por_dia if config else decimal.Decimal('2.50')
-
     devolucoes_com_multa = []
     hoje = date.today()
     
@@ -632,8 +631,7 @@ def multa(request):
     total_multas_aberto = decimal.Decimal('0.00')
 
     for emprestimo in emprestimos_atrasados:
-        dias_atraso = (hoje - emprestimo.data_devolucao).days
-        valor_multa_temp = dias_atraso * valor_por_dia
+        valor_multa_temp = _calcular_valor_multa(emprestimo, hoje)
         total_multas_aberto += valor_multa_temp 
         emprestimo.valor_multa_temp = valor_multa_temp
         devolucoes_com_multa.append(emprestimo)

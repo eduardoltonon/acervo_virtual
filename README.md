@@ -25,6 +25,7 @@ Este projeto foi desenvolvido como parte do Projeto Aplicado III/IV.
 - **Front-end:** HTML5, CSS3, JavaScript Puro (Vanilla JS)
 - **Estilização & UI/UX:** Bootstrap 5, FontAwesome 6, Paleta de Cores Customizada (Grafite, Verde Água e Areia)
 - **Processamento e Mídia:** Biblioteca `Pillow` (para o processamento de capas de livros e fotos em Base64 da câmera)
+- **Segurança de Ambiente:** `python-dotenv` (para gerenciamento de chaves sensíveis e configurações)
 
 ---
 
@@ -59,9 +60,9 @@ O uso do ambiente virtual é obrigatório para evitar conflitos de bibliotecas.
 > *Dica: Se a ativação for bem-sucedida, você verá um `(venv)` no início da linha do seu terminal.*
 
 ### 4. Instalar as Dependências do Projeto
-Com o ambiente ativado, instale o Django, Pillow e quaisquer outros pacotes mapeados no projeto executando:
+Com o ambiente ativado, instale o Django, Pillow e as bibliotecas de segurança executando o comando abaixo:
 ```bash
-pip install -r requirements.txt
+pip install django pillow python-dotenv
 ```
 *(Se o arquivo `requirements.txt` não existir, você pode instalar as bases manualmente rodando: `pip install django pillow`).*
 
