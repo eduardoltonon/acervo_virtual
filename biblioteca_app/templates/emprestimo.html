@@ -13,15 +13,18 @@
     <div class="row">
         <div class="col-md-4 mb-4">
             <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center d-flex flex-column align-items-center justify-content-center">
-                    <img id="livro-capa" src="{% if livro_pre_selecionado and livro_pre_selecionado.capa %}{{ livro_pre_selecionado.capa.url }}{% endif %}" alt="Capa" class="img-fluid rounded shadow mb-3" style="max-height: 200px; {% if not livro_pre_selecionado.capa %}display: none;{% endif %}">
-                    <div id="livro-details" class="w-100 text-start">
-                        <h5 id="livro-titulo" class="fw-bold">{% if livro_pre_selecionado %}{{ livro_pre_selecionado.titulo }}{% else %}Nenhum livro selecionado{% endif %}</h5>
-                        <p id="livro-autor" class="text-muted mb-1">{% if livro_pre_selecionado %}{{ livro_pre_selecionado.autor }}{% endif %}</p>
-                        <p id="livro-genero" class="mb-1 text-secondary">{% if livro_pre_selecionado %}Gênero: {{ livro_pre_selecionado.genero }}{% endif %}</p>
-                        <p id="livro-edicao" class="mb-1 text-secondary">{% if livro_pre_selecionado %}Edição: {{ livro_pre_selecionado.edicao }}{% endif %}</p>
-                        <p id="livro-classificacao" class="mb-1 text-secondary fw-bold text-primary">{% if livro_pre_selecionado %}Classificação: {{ livro_pre_selecionado.classificacao }}{% endif %}</p>
-                        <p id="exemplar-tombo" class="mt-2 mb-0 text-danger fw-bold fs-5"></p>
+                <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
+                    <h5 class="fw-bold"><i class="fa-solid fa-book-open text-primary me-2"></i> Obras Selecionadas</h5>
+                </div>
+                <div class="card-body p-3" id="livros-selecionados-container" style="max-height: 500px; overflow-y: auto;">
+                    {% if livro_pre_selecionado %}
+                    <div class="alert alert-info py-2 text-center" id="dica-pre-selecionado">
+                        <p class="text-dark small mb-0">Você selecionou <strong>{{ livro_pre_selecionado.titulo }}</strong>. Escaneie o tombo do livro à direita para confirmar.</p>
+                    </div>
+                    {% endif %}
+                    <div class="text-center text-muted mt-4" id="placeholder-livros">
+                        <i class="fa-solid fa-barcode fa-3x mb-3 opacity-50"></i>
+                        <p>Bipe o código de tombo para exibir as informações da obra aqui.</p>
                     </div>
                 </div>
             </div>
@@ -41,8 +44,17 @@
                                 <div class="small fw-bold" id="multa-info"></div>
                             </div>
                             <div class="col-12 mt-4">
-                                <label class="form-label fw-bold">Código de Tombo (Livro)</label>
-                                <input list="lista-tombos" type="text" id="codigo_tombo" name="codigo_tombo" class="form-control form-control-lg border-danger" placeholder="Escaneie ou digite o código do exemplar" required>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label fw-bold mb-0">Códigos de Tombo (Livros)</label>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="adicionarCampoTombo()"><i class="fa-solid fa-plus me-1"></i> Empréstimo em Lote</button>
+                                </div>
+                                <div id="tombos-container">
+                                    <div class="input-group mb-2 tombo-group shadow-sm">
+                                        <span class="input-group-text bg-light"><i class="fa-solid fa-barcode"></i></span>
+                                        <input list="lista-tombos" type="text" name="codigo_tombo" class="form-control form-control-lg border-danger tombo-input" placeholder="Escaneie ou digite o código do exemplar" required onchange="buscarDetalhesTombo(this)">
+                                        <button type="button" class="btn btn-outline-danger btn-remover-tombo d-none" onclick="removerTombo(this)" title="Remover exemplar"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                </div>
                                 <datalist id="lista-tombos">
                                     {% if livro_pre_selecionado %}
                                         {% for exemplar in exemplares_disponiveis %}<option value="{{ exemplar.codigo_tombo }}">{{ exemplar.codigo_tombo }} ({{ livro_pre_selecionado.titulo }})</option>{% endfor %}
@@ -92,6 +104,142 @@
             hoje.setDate(hoje.getDate() + 14);
             dtDev.value = hoje.toISOString().split('T')[0];
         }
+        
+        // Prevenir que o Enter do leitor de código de barras submeta o formulário prematuramente
+        document.getElementById('form-emprestimo').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                if (e.target.classList.contains('tombo-input')) {
+                    e.preventDefault();
+                    e.target.blur(); // Aciona o onchange (buscarDetalhesTombo)
+                } else if (e.target.id === 'id_leitor') {
+                    e.preventDefault();
+                    e.target.blur();
+                }
+            }
+        });
     });
+    
+    function adicionarCampoTombo() {
+        const container = document.getElementById('tombos-container');
+        const original = container.querySelector('.tombo-group');
+        const clone = original.cloneNode(true);
+        
+        const input = clone.querySelector('.tombo-input');
+        input.value = '';
+        
+        container.appendChild(clone);
+        atualizarBotoesRemover();
+        input.focus();
+    }
+
+    function removerTombo(btn) {
+        const group = btn.closest('.tombo-group');
+        const input = group.querySelector('.tombo-input');
+        
+        const tombo = input.value.trim();
+        if (tombo) {
+            const card = document.getElementById('card-tombo-' + tombo);
+            if (card) card.remove();
+        }
+        
+        group.remove();
+        atualizarBotoesRemover();
+        verificarPlaceholder();
+    }
+
+    function atualizarBotoesRemover() {
+        const container = document.getElementById('tombos-container');
+        const groups = container.querySelectorAll('.tombo-group');
+        groups.forEach((group) => {
+            const btn = group.querySelector('.btn-remover-tombo');
+            if (groups.length > 1) {
+                btn.classList.remove('d-none');
+            } else {
+                btn.classList.add('d-none');
+            }
+        });
+    }
+
+    async function buscarDetalhesTombo(input) {
+        const tombo = input.value.trim();
+        if (!tombo) return;
+        
+        const inputs = document.querySelectorAll('.tombo-input');
+        let count = 0;
+        inputs.forEach(inp => { if(inp.value.trim() === tombo) count++; });
+        if (count > 1) {
+            alert('Este exemplar já foi inserido na lista.');
+            input.value = '';
+            return;
+        }
+
+        try {
+            const response = await fetch(`${window.apiUrls.buscarExemplar}?tombo=${encodeURIComponent(tombo)}`);
+            if (response.ok) {
+                const data = await response.json();
+                
+                const dica = document.getElementById('dica-pre-selecionado');
+                if (dica) dica.style.display = 'none';
+                
+                document.getElementById('placeholder-livros').style.display = 'none';
+                
+                let statusHtml = '';
+                if (data.status === 'disponivel') {
+                    statusHtml = `<span class="badge bg-success mt-1"><i class="fa-solid fa-check"></i> Disponível</span>`;
+                } else {
+                    statusHtml = `<span class="badge bg-danger mt-1"><i class="fa-solid fa-xmark"></i> ${data.status_display}</span>`;
+                    alert(`Atenção: Este exemplar está marcado como "${data.status_display}" e não pode ser emprestado.`);
+                    input.value = ''; 
+                    return;
+                }
+                
+                let capaHtml = data.capa ? `<img src="${data.capa}" class="img-fluid rounded shadow-sm" style="max-height: 90px; object-fit: contain;">` : `<div class="bg-light rounded d-flex align-items-center justify-content-center mx-auto shadow-sm" style="height: 90px; width: 65px;"><i class="fa-solid fa-image text-muted fa-2x"></i></div>`;
+
+                const cardId = 'card-tombo-' + tombo;
+                let card = document.getElementById(cardId);
+                if (!card) {
+                    const container = document.getElementById('livros-selecionados-container');
+                    const cardHtml = `
+                        <div class="card border mb-3 shadow-sm card-livro-selecionado" id="${cardId}">
+                            <div class="row g-0 align-items-center p-2">
+                                <div class="col-3 text-center">
+                                    ${capaHtml}
+                                </div>
+                                <div class="col-9 ps-2 text-start">
+                                    <h6 class="fw-bold mb-1 text-dark" style="font-size: 0.95rem; line-height: 1.2;">${data.titulo}</h6>
+                                    <p class="text-muted mb-1 text-truncate" style="font-size: 0.85rem;" title="${data.autor}">${data.autor}</p>
+                                    <span class="badge bg-light text-dark border border-secondary mb-1"><i class="fa-solid fa-barcode"></i> ${tombo}</span>
+                                    <br>${statusHtml}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', cardHtml);
+                    
+                    // Abre automaticamente um novo campo se for o último
+                    const groups = document.querySelectorAll('.tombo-group');
+                    const lastGroup = groups[groups.length - 1];
+                    if (input === lastGroup.querySelector('.tombo-input')) {
+                        adicionarCampoTombo();
+                    }
+                }
+                
+            } else {
+                const err = await response.json();
+                alert(err.erro || 'Exemplar não encontrado.');
+                input.value = '';
+                input.focus();
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    function verificarPlaceholder() {
+        const cards = document.querySelectorAll('.card-livro-selecionado');
+        if (cards.length === 0) {
+            document.getElementById('placeholder-livros').style.display = 'block';
+        }
+    }
 </script>
 {% endblock %}

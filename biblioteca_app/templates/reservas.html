@@ -23,7 +23,7 @@
         {% csrf_token %}
         <div class="card-header bg-white py-3">
             <div class="d-flex gap-2">
-                <button type="submit" name="acao_massa" value="devolver" class="btn btn-outline-success btn-sm" onclick="return confirm('Confirmar devolução para HOJE dos itens selecionados? (Multas permanecerão pendentes)');">
+                <button type="submit" name="acao_massa" value="devolver" class="btn btn-outline-success btn-sm">
                     <i class="fa-solid fa-check me-1"></i> Receber Devoluções
                 </button>
                 <button type="submit" name="acao_massa" value="renovar" class="btn btn-outline-primary btn-sm">
@@ -52,7 +52,7 @@
                         data-emprestimo-atrasado="{% if emprestimo.atrasado %}1{% else %}0{% endif %}" 
                         data-emprestimo-multa="{{ emprestimo.valor_multa }}">
                         
-                        <td><input type="checkbox" name="emprestimos_selecionados" value="{{ emprestimo.id }}" class="row-checkbox"></td>
+                        <td><input type="checkbox" name="emprestimos_selecionados" value="{{ emprestimo.id }}" class="row-checkbox" data-atrasado="{{ emprestimo.atrasado|lower }}"></td>
                         <td class="text-start ps-3">
                             <strong>{{ emprestimo.exemplar.livro.titulo }}</strong><br>
                             <small class="badge bg-light text-dark border">ID: {{ emprestimo.exemplar.codigo_tombo }}</small>
@@ -114,5 +114,93 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Pagamento Multa Lote -->
+    <div class="modal fade" id="modal-multa-lote" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title fw-bold text-dark"><i class="fa-solid fa-circle-exclamation me-2"></i>Atenção: Multas Pendentes</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <i class="fa-solid fa-file-invoice-dollar fa-3x text-warning mb-3"></i>
+                    <p class="fs-5 mb-2">Um ou mais livros selecionados <strong>possuem multa por atraso</strong>.</p>
+                    <p class="fs-6 text-muted mb-0">O leitor está pagando o valor devido neste momento?</p>
+                </div>
+                <div class="modal-footer bg-light d-flex justify-content-between gap-2">
+                    <button type="button" class="btn btn-outline-danger fw-bold flex-grow-1" onclick="submeterDevolucaoLote(false)">Não (Gerar Dívida)</button>
+                    <button type="button" class="btn btn-success fw-bold flex-grow-1" onclick="submeterDevolucaoLote(true)">Sim (Receber Pagamento)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const formMassa = document.getElementById('form-acoes-massa');
+        if (!formMassa) return;
+
+        formMassa.addEventListener('submit', function(e) {
+            // Determina a ação pelo botão que foi clicado
+            const acao = e.submitter ? e.submitter.value : null;
+
+            // A lógica só se aplica para a ação de 'devolver'
+            if (acao !== 'devolver') {
+                return; // Permite que 'renovar' e outras ações funcionem normalmente
+            }
+
+            const checkboxes = formMassa.querySelectorAll('input[name="emprestimos_selecionados"]:checked');
+            if (checkboxes.length === 0) {
+                alert('Por favor, selecione ao menos um item para devolver.');
+                e.preventDefault();
+                return;
+            }
+
+            let temMulta = false;
+            checkboxes.forEach(cb => {
+                if (cb.getAttribute('data-atrasado') === 'true') {
+                    temMulta = true;
+                }
+            });
+
+            // Se existe multa e ainda não perguntamos ao usuário (o campo 'pagou_multa' não existe no form)...
+            if (temMulta && !formMassa.querySelector('input[name="pagou_multa"]')) {
+                e.preventDefault(); // Impede o envio do formulário
+                const modal = new bootstrap.Modal(document.getElementById('modal-multa-lote'));
+                modal.show();
+                // Guarda o formulário para ser usado pelos botões do modal
+                window.formToSubmit = formMassa;
+            }
+            // Se não houver multa, o formulário é enviado normalmente.
+        });
+    });
+
+    function submeterDevolucaoLote(pagouMulta) {
+        const form = window.formToSubmit;
+        if (!form) return;
+
+        // Cria e anexa o campo oculto com a resposta do pagamento
+        const pagouMultaInput = document.createElement('input');
+        pagouMultaInput.type = 'hidden';
+        pagouMultaInput.name = 'pagou_multa';
+        pagouMultaInput.value = pagouMulta ? 'true' : 'false';
+        form.appendChild(pagouMultaInput);
+
+        // IMPORTANTE: Cria e anexa o campo da ação, pois o envio programático não inclui o valor do botão
+        const acaoInput = document.createElement('input');
+        acaoInput.type = 'hidden';
+        acaoInput.name = 'acao_massa';
+        acaoInput.value = 'devolver';
+        form.appendChild(acaoInput);
+        
+        // Esconde o modal e envia o formulário
+        const modalEl = document.getElementById('modal-multa-lote');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+        
+        form.submit();
+    }
+    </script>
 </div>
 {% endblock %}

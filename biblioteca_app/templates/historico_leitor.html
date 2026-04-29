@@ -51,13 +51,45 @@
                         {% if request.session.funcao == 'administrador' or request.user.is_superuser %}
                         <div class="d-flex gap-2 flex-wrap">
                             <button type="button" class="btn btn-outline-secondary fs-6 px-4 py-2 btn-editar"><i class="fa-solid fa-pen me-2"></i> Editar</button>
-                            <form method="POST" action="{% url 'excluir_leitor' leitor.id %}" class="mb-0">
+                            <form method="POST" action="{% url 'excluir_leitor' leitor.id %}" class="mb-0" onsubmit="confirmarSubmit(event, 'Excluir Leitor', 'Tem certeza que deseja excluir o perfil deste leitor permanentemente?', 'error');">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-outline-danger fs-6 px-4 py-2 btn-excluir"><i class="fa-solid fa-trash me-2"></i> Excluir</button>
                             </form>
                         </div>
                         {% endif %}
                     </div>
+
+                    <!-- Aba de Cobrança / Financeiro Direto no Perfil -->
+                    {% if multas_pendentes or tem_livro_atrasado %}
+                    <div class="mt-4 border-top pt-4">
+                        <h5 class="fw-bold mb-3 text-danger"><i class="fa-solid fa-file-invoice-dollar me-2"></i> Multas e Pendências Financeiras</h5>
+                        
+                        {% if multas_pendentes %}
+                        <div class="list-group mb-4 shadow-sm">
+                            {% for multa in multas_pendentes %}
+                            <div class="list-group-item list-group-item-danger d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                                <div>
+                                    <h6 class="fw-bold mb-1 text-danger">R$ {{ multa.valor_multa|floatformat:2 }} <span class="text-dark fs-6 fw-normal ms-2">- Atraso: {{ multa.emprestimo.exemplar.livro.titulo }}</span></h6>
+                                    <small class="text-muted"><i class="fa-solid fa-calendar-check me-1"></i> Devolvido em: {{ multa.data_devolucao_real|date:"d/m/Y" }}</small>
+                                </div>
+                                <form method="POST" action="{% url 'historico_leitor' leitor.id %}" onsubmit="confirmarSubmit(event, 'Receber Pagamento', 'Confirmar o recebimento de R$ {{ multa.valor_multa|floatformat:2 }}?', 'question');" class="m-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="acao" value="quitar_multa">
+                                    <input type="hidden" name="devolucao_id" value="{{ multa.id }}">
+                                    <button type="submit" class="btn btn-success fw-bold"><i class="fa-solid fa-hand-holding-dollar me-1"></i> Receber Pagamento</button>
+                                </form>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if tem_livro_atrasado %}
+                        <div class="alert alert-warning border-warning shadow-sm">
+                            <i class="fa-solid fa-triangle-exclamation me-2"></i> Este leitor possui livros em atraso que <strong>ainda não foram devolvidos</strong>. A multa continuará a crescer até que o item seja devolvido no menu "Circulação".
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             
@@ -81,7 +113,12 @@
                                 <td>{{ emp.exemplar.codigo_tombo }}</td>
                                 <td>{{ emp.data_emprestimo|date:"d/m/Y" }}</td>
                                 <td>{{ emp.data_devolucao|date:"d/m/Y" }}</td>
-                                <td><span class="badge bg-{{ emp.status_color }} px-3 py-2">{{ emp.status_display }}</span></td>
+                                <td>
+                                    <span class="badge bg-{{ emp.status_color }} px-3 py-2">{{ emp.status_display }}</span>
+                                    {% if emp.is_atrasado %}
+                                    <div class="small text-danger fw-bold mt-1">Multa Atual: R$ {{ emp.valor_multa_pendente|floatformat:2 }}</div>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% empty %}
                             <tr><td colspan="5" class="text-muted py-4">Nenhum empréstimo registrado para este leitor.</td></tr>

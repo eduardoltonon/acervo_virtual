@@ -3,6 +3,7 @@ from django.utils import timezone
 from .models import Livro, Exemplar, Emprestimo, Devolucao, Configuracao, Leitor, Autor, Editora, Genero, ImagemLivro
 import decimal
 import uuid
+from datetime import date
 
 def criar_livro_com_exemplares(titulo, autor_nome, edicao, numero_paginas, genero_nome, classificacao, sinopse, capa, quantidade, imagens_adicionais=None, editora_nome=None, idioma=None, data_publicacao=None, localizacao=None):
     with transaction.atomic():
@@ -34,18 +35,28 @@ def criar_livro_com_exemplares(titulo, autor_nome, edicao, numero_paginas, gener
         Exemplar.objects.bulk_create(exemplares)
     return livro
 
+def calcular_valor_multa(emprestimo, data_base=None):
+    if not data_base:
+        data_base = date.today()
+    config = Configuracao.objects.first()
+    valor_por_dia = decimal.Decimal(str(config.multa_por_dia)) if config else decimal.Decimal('2.50')
+    if data_base > emprestimo.data_devolucao:
+        dias_atraso = (data_base - emprestimo.data_devolucao).days
+        return valor_por_dia * dias_atraso
+    return decimal.Decimal('0.00')
+
 def realizar_emprestimo(leitor, exemplar, data_emprestimo, data_devolucao, usuario):
     with transaction.atomic():
         if not leitor.ativo:
             raise ValueError("Este leitor está bloqueado no sistema.")
             
         if leitor.possui_multa:
-            raise ValueError("Leitor possui multas pendentes por atraso.")
+            raise ValueError("Leitor possui livros em atraso ou multas financeiras não pagas.")
 
-        if exemplar.status != 'disponivel':
+        if exemplar.status != Exemplar.Status.DISPONIVEL:
             raise ValueError("Este exemplar físico não está disponível no momento.")
 
-        exemplar.status = 'emprestado'
+        exemplar.status = Exemplar.Status.EMPRESTADO
         exemplar.save()
 
         return Emprestimo.objects.create(
@@ -55,20 +66,16 @@ def realizar_emprestimo(leitor, exemplar, data_emprestimo, data_devolucao, usuar
 
 def realizar_devolucao(emprestimo, data_entrega, valor_multa_paga, usuario):
     with transaction.atomic():
-        config = Configuracao.objects.first()
-        valor_por_dia = decimal.Decimal(str(config.multa_por_dia)) if config else decimal.Decimal('2.50')
-        dias_atraso = (data_entrega - emprestimo.data_devolucao).days
-        
-        multa_devida = (valor_por_dia * dias_atraso) if dias_atraso > 0 else decimal.Decimal('0.00')
-        valor_a_registrar = decimal.Decimal(valor_multa_paga) if decimal.Decimal(valor_multa_paga) > 0 else multa_devida
-        multa_foi_paga = True if multa_devida == 0 or decimal.Decimal(valor_multa_paga) == 0.00 else False
+        multa_devida = calcular_valor_multa(emprestimo, data_entrega)
+        valor_pago_decimal = decimal.Decimal(str(valor_multa_paga)) if valor_multa_paga else decimal.Decimal('0.00')
+        multa_foi_paga = True if multa_devida == 0 or valor_pago_decimal >= multa_devida else False
 
         devolucao = Devolucao.objects.create(
             emprestimo=emprestimo, data_devolucao_real=data_entrega,
-            valor_multa=valor_a_registrar, multa_paga=multa_foi_paga, recebido_por=usuario
+            valor_multa=multa_devida, multa_paga=multa_foi_paga, recebido_por=usuario if multa_foi_paga and multa_devida > 0 else None
         )
 
-        emprestimo.exemplar.status = 'disponivel'
+        emprestimo.exemplar.status = Exemplar.Status.DISPONIVEL
         emprestimo.exemplar.save()
         
         return devolucao

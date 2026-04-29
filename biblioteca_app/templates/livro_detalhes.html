@@ -85,7 +85,7 @@
                         {% if request.session.funcao == 'administrador' or request.user.is_superuser %}
                         <div class="d-flex gap-2 flex-wrap">
                             <button type="button" class="btn btn-outline-secondary fs-6 px-4 py-2 btn-editar"><i class="fa-solid fa-pen me-2"></i> Editar</button>
-                            <form method="POST" action="{% url 'excluir_livro' livro.id %}" class="mb-0">
+                            <form method="POST" action="{% url 'excluir_livro' livro.id %}" class="mb-0" onsubmit="confirmarSubmit(event, 'Excluir Livro', 'Tem certeza que deseja excluir permanentemente o livro \'{{ livro.titulo|escapejs }}\'?', 'error');">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-outline-danger fs-6 px-4 py-2 btn-excluir"><i class="fa-solid fa-trash me-2"></i> Excluir</button>
                             </form>

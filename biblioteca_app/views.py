@@ -21,28 +21,6 @@ from .forms import LeitorForm, LivroCadastroForm, LeitorEditForm, LivroEditForm
 
 logger = logging.getLogger(__name__)
 
-# --- Funções Auxiliares (Regras de Negócio Extraídas) ---
-def _validar_cpf(cpf):
-    cpf = ''.join(filter(str.isdigit, str(cpf)))
-    if len(cpf) != 11 or len(set(cpf)) == 1:
-        return False
-    for i in range(9, 11):
-        value = sum((int(cpf[num]) * ((i+1) - num) for num in range(0, i)))
-        digit = ((value * 10) % 11) % 10
-        if digit != int(cpf[i]):
-            return False
-    return True
-
-def _calcular_valor_multa(emprestimo, data_base=None):
-    if not data_base:
-        data_base = date.today()
-    config = Configuracao.objects.first()
-    valor_por_dia = decimal.Decimal(str(config.multa_por_dia)) if config else decimal.Decimal('2.50')
-    if data_base > emprestimo.data_devolucao:
-        dias_atraso = (data_base - emprestimo.data_devolucao).days
-        return valor_por_dia * dias_atraso
-    return decimal.Decimal('0.00')
-
 def login_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -127,19 +105,32 @@ def excluir_usuario(request, user_id):
 
 @admin_required
 def configuracao_multa(request):
-    if request.method == 'POST' and request.POST.get('form-action') == 'salvar-multa':
-        valor_multa_str = request.POST.get('multa-por-dia')
-        dias_renovacao = request.POST.get('dias-renovacao')
-        if valor_multa_str:
-            config, created = Configuracao.objects.get_or_create(pk=1)
-            config.multa_por_dia = valor_multa_str
-            config.dias_renovacao = dias_renovacao or 7
-            config.save()
-            messages.success(request, 'Valor da multa atualizado com sucesso!')
+    config, created = Configuracao.objects.get_or_create(pk=1)
+    
+    if request.method == 'POST':
+        action = request.POST.get('form-action')
+        
+        if action == 'salvar-multa':
+            valor_multa_str = request.POST.get('multa-por-dia')
+            if valor_multa_str:
+                config.multa_por_dia = valor_multa_str
+                config.save()
+                messages.success(request, 'Valor da multa atualizado com sucesso!')
+                
+        elif action == 'salvar-renovacao':
+            dias_renovacao = request.POST.get('dias-renovacao')
+            if dias_renovacao:
+                config.dias_renovacao = dias_renovacao
+                config.save()
+                messages.success(request, 'Regra de renovação atualizada com sucesso!')
+                
         return redirect('configuracao_multa')
 
-    multa_por_dia = Configuracao.objects.first().multa_por_dia if Configuracao.objects.exists() else 2.50
-    return render(request, 'valor_multa.html', {'multa_por_dia': multa_por_dia})
+    context = {
+        'multa_por_dia': config.multa_por_dia,
+        'dias_renovacao': config.dias_renovacao
+    }
+    return render(request, 'valor_multa.html', context)
 
 @admin_required
 def configuracao_contas(request):
@@ -149,18 +140,44 @@ def configuracao_contas(request):
 
         email = request.POST.get('email')
         endereco = request.POST.get('endereco')
+        
+        nome = request.POST.get('nome')
+        data_nascimento = request.POST.get('data_nascimento')
+        celular = request.POST.get('celular')
+        cpf = request.POST.get('cpf')
+        cep = request.POST.get('cep')
+        complemento = request.POST.get('complemento')
+        cidade = request.POST.get('cidade')
+        funcao = request.POST.get('funcao')
+        nova_senha = request.POST.get('password')
+
         perfil, created = PerfilUsuario.objects.get_or_create(user=user)
 
-        if email and endereco:
+        if email and endereco and cpf:
+            if PerfilUsuario.objects.filter(cpf=cpf).exclude(user=user).exists():
+                messages.error(request, 'Erro: CPF já está em uso por outro funcionário.')
+                return redirect('configuracao_contas')
+
             user.email = email
+            if nova_senha:
+                user.set_password(nova_senha)
             user.save()
+            
+            perfil.nome = nome
+            perfil.data_nascimento = data_nascimento or None
+            perfil.celular = celular
+            perfil.cpf = cpf
             perfil.email = email
+            perfil.cep = cep
             perfil.endereco = endereco
+            perfil.complemento = complemento
+            perfil.cidade = cidade
+            perfil.funcao = funcao
             perfil.save()
             
-            messages.success(request, 'Usuário atualizado com sucesso!')
+            messages.success(request, 'Funcionário atualizado com sucesso!')
         else:
-            messages.error(request, 'Erro: E-mail e Endereço são obrigatórios.')
+            messages.error(request, 'Erro: E-mail, CPF e Endereço são obrigatórios.')
             
         return redirect('configuracao_contas')
 
@@ -176,6 +193,14 @@ def configuracao_cadastro(request):
         cpf = request.POST.get('cpf')
         endereco = request.POST.get('endereco')
         funcao = request.POST.get('funcao')  
+        
+        nome = request.POST.get('nome')
+        data_nascimento = request.POST.get('data_nascimento')
+        celular = request.POST.get('celular')
+        cep = request.POST.get('cep')
+        complemento = request.POST.get('complemento')
+        cidade = request.POST.get('cidade')
+        foto_base64 = request.POST.get('foto_base64')
 
         if username and password and email and cpf and endereco and funcao:
             if User.objects.filter(username=username).exists():
@@ -184,14 +209,30 @@ def configuracao_cadastro(request):
                 messages.error(request, 'CPF já cadastrado.')
             else:
                 user = User.objects.create_user(username=username, password=password, email=email)
-                PerfilUsuario.objects.create(
+                perfil = PerfilUsuario.objects.create(
                     user=user,
+                    nome=nome,
+                    data_nascimento=data_nascimento or None,
+                    celular=celular,
                     email=email,
                     cpf=cpf,
+                    cep=cep,
                     endereco=endereco,
+                    complemento=complemento,
+                    cidade=cidade,
                     funcao=funcao  
                 )
-                messages.success(request, 'Usuário cadastrado com sucesso!')
+                
+                if foto_base64:
+                    try:
+                        formato, imgstr = foto_base64.split(';base64,')
+                        ext = formato.split('/')[-1]
+                        cpf_limpo = ''.join(filter(str.isdigit, cpf))
+                        perfil.foto.save(f"funcionario_{cpf_limpo}.{ext}", ContentFile(base64.b64decode(imgstr)), save=True)
+                    except Exception as e:
+                        messages.warning(request, f'Aviso: Não foi possível processar a foto da câmera ({str(e)}).')
+                        
+                messages.success(request, 'Funcionário cadastrado com sucesso!')
         return redirect('configuracao_cadastro')
 
     return render(request, 'cadastro.html')
@@ -200,7 +241,7 @@ def livro_detalhes(request, livro_id):
     livro = get_object_or_404(Livro.objects.select_related('autor', 'genero', 'editora').prefetch_related('exemplares', 'imagens_adicionais'), pk=livro_id)
     
     emprestimos_ativos = Emprestimo.objects.filter(exemplar__livro=livro, devolucao__isnull=True).count()
-    disponivel = Exemplar.objects.filter(livro=livro, status='disponivel').exists()
+    disponivel = Exemplar.objects.filter(livro=livro, status=Exemplar.Status.DISPONIVEL).exists()
     
     data_devolucao_proxima = None
     if not disponivel:
@@ -255,9 +296,11 @@ def editar_livro(request, livro_id):
                     # Adiciona o nome do campo para melhor contexto, se disponível
                     field_name = form.fields[field].label if field in form.fields else field
                     messages.error(request, f'{field_name}: {error}', extra_tags="erro")
-        return redirect('estoque') # Redireciona mesmo em caso de erro, mantendo o comportamento original
+        return redirect('estoque') 
     
-    return redirect('estoque')
+    # Para requisições de clique normal (GET), exibimos a tela de edição
+    form = LivroEditForm(instance=livro)
+    return render(request, 'editar_livro.html', {'form': form, 'livro': livro})
 
 @admin_required
 @require_POST
@@ -375,8 +418,15 @@ def usuarios(request):
         devolucao__isnull=True
     )
     
+    subquery_divida = Devolucao.objects.filter(
+        emprestimo__leitor=OuterRef('pk'),
+        multa_paga=False,
+        valor_multa__gt=0
+    )
+    
     leitores_base = Leitor.objects.annotate(
-        tem_multa_anotada=Exists(subquery_multa)
+        tem_atraso=Exists(subquery_multa),
+        tem_divida=Exists(subquery_divida)
     )
     
     if query:
@@ -396,12 +446,14 @@ def usuarios(request):
 def emprestimo(request):
     if request.method == 'POST':
         id_leitor_post = request.POST.get('id_leitor') 
-        tombo_post = request.POST.get('codigo_tombo')
+        tombos_post = request.POST.getlist('codigo_tombo')
         data_emprestimo_str = request.POST.get('data_emprestimo')
         data_devolucao_str = request.POST.get('data_devolucao')
 
-        if not all([id_leitor_post, tombo_post, data_emprestimo_str, data_devolucao_str]):
-            messages.error(request, "Todos os campos são obrigatórios.", extra_tags="erro")
+        tombos_post = [t.strip() for t in tombos_post if t.strip()]
+
+        if not all([id_leitor_post, tombos_post, data_emprestimo_str, data_devolucao_str]):
+            messages.error(request, "Todos os campos são obrigatórios e ao menos um exemplar deve ser informado.", extra_tags="erro")
             return redirect('emprestimo')
 
         try:
@@ -425,20 +477,25 @@ def emprestimo(request):
             messages.error(request, "ID do Leitor não encontrado.", extra_tags="erro")
             return redirect('emprestimo')
 
-        try:
-            exemplar = Exemplar.objects.get(codigo_tombo=tombo_post)
-        except Exemplar.DoesNotExist:
-            messages.error(request, "Código de Tombo não encontrado.", extra_tags="erro")
-            return redirect('emprestimo')
-
-        try:
-            services.realizar_emprestimo(
-                leitor=leitor, exemplar=exemplar, data_emprestimo=data_emprestimo_obj,
-                data_devolucao=data_devolucao_obj, usuario=request.user if request.user.is_authenticated else None
-            )
-            messages.success(request, "Empréstimo registrado com sucesso.", extra_tags="sucesso")
-        except ValueError as e:
-            messages.error(request, str(e), extra_tags="erro")
+        sucessos = 0
+        erros = []
+        for tombo_post in tombos_post:
+            try:
+                exemplar = Exemplar.objects.get(codigo_tombo=tombo_post)
+                services.realizar_emprestimo(
+                    leitor=leitor, exemplar=exemplar, data_emprestimo=data_emprestimo_obj,
+                    data_devolucao=data_devolucao_obj, usuario=request.user if request.user.is_authenticated else None
+                )
+                sucessos += 1
+            except Exemplar.DoesNotExist:
+                erros.append(f"Código de Tombo '{tombo_post}' não encontrado.")
+            except ValueError as e:
+                erros.append(f"Erro no exemplar '{tombo_post}': {str(e)}")
+                
+        if sucessos > 0:
+            messages.success(request, f"{sucessos} empréstimo(s) registrado(s) com sucesso.", extra_tags="sucesso")
+        for erro in erros:
+            messages.error(request, erro, extra_tags="erro")
             
         return redirect('emprestimo')
 
@@ -447,7 +504,7 @@ def emprestimo(request):
 
 def emprestimo_com_livro(request, livro_id):
     livro = get_object_or_404(Livro, pk=livro_id)
-    exemplares_disponiveis = Exemplar.objects.filter(livro=livro, status='disponivel')
+    exemplares_disponiveis = Exemplar.objects.filter(livro=livro, status=Exemplar.Status.DISPONIVEL)
     
     if not exemplares_disponiveis.exists():
         messages.error(request, f'O livro "{livro.titulo}" não está disponível para empréstimo no momento.')
@@ -476,11 +533,14 @@ def reservas(request):
         elif acao == 'devolver' and ids_selecionados:
             sucessos = 0
             hoje = timezone.now().date()
+            pagou_multa = request.POST.get('pagou_multa') == 'true'
             for emp_id in ids_selecionados:
                 emp = get_object_or_404(Emprestimo, pk=emp_id)
+                multa_devida = services.calcular_valor_multa(emp, hoje)
+                valor_pago = multa_devida if pagou_multa else decimal.Decimal('0.00')
                 services.realizar_devolucao(
                     emprestimo=emp, data_entrega=hoje, 
-                    valor_multa_paga=0.00, usuario=request.user if request.user.is_authenticated else None
+                    valor_multa_paga=valor_pago, usuario=request.user if request.user.is_authenticated else None
                 )
                 sucessos += 1
             messages.success(request, f'{sucessos} empréstimo(s) devolvido(s) com sucesso.')
@@ -507,7 +567,7 @@ def reservas(request):
     hoje = date.today()
 
     for emprestimo in emprestimos_ativos:
-        valor_multa = _calcular_valor_multa(emprestimo, hoje)
+        valor_multa = services.calcular_valor_multa(emprestimo, hoje)
         emprestimo.atrasado = valor_multa > 0
         emprestimo.valor_multa = f"{valor_multa:.2f}"
         
@@ -534,7 +594,7 @@ def calcular_multa(request):
         else:
             data_entrega = datetime.date.today() 
         
-        valor_multa = _calcular_valor_multa(emprestimo, data_entrega)
+        valor_multa = services.calcular_valor_multa(emprestimo, data_entrega)
         atraso = valor_multa > 0
 
         return JsonResponse({
@@ -557,34 +617,10 @@ def devolver_livro(request, emprestimo_id):
             messages.error(request, "Data de entrega inválida.")
             return redirect("reservas")
 
-        multa_devida = _calcular_valor_multa(emprestimo, data_entrega)
-
-        multa_foi_paga = False
-        valor_a_registrar = multa_devida 
-        
-        if multa_devida > 0:
-            if valor_multa_post_str == "0.00":
-                multa_foi_paga = True 
-                
-            else:
-                multa_foi_paga = False 
-                valor_a_registrar = decimal.Decimal(valor_multa_post_str)
-
-        else:
-            multa_foi_paga = True
-            valor_a_registrar = decimal.Decimal('0.00')
-
-
-        devolucao = Devolucao.objects.create(
-            emprestimo=emprestimo,
-            data_devolucao_real=data_entrega,
-            valor_multa=valor_a_registrar, 
-            multa_paga=multa_foi_paga 
+        services.realizar_devolucao(
+            emprestimo=emprestimo, data_entrega=data_entrega,
+            valor_multa_paga=valor_multa_post_str, usuario=request.user if request.user.is_authenticated else None
         )
-
-        emprestimo.devolvido = True 
-        emprestimo.devolucao = devolucao
-        emprestimo.save()
 
         messages.success(request, f"O livro '{emprestimo.livro.titulo}' foi devolvido com sucesso!")
         return redirect("reservas")
@@ -594,40 +630,51 @@ def devolver_livro(request, emprestimo_id):
 
 def multa(request):
     query = request.GET.get('q')
-    
-    if query:
-        livros_base = Livro.objects.filter(
-            Q(titulo__icontains=query) |
-            Q(autor__nome__icontains=query) | 
-            Q(genero__nome__icontains=query)  
-        ).distinct()
-    else:
-        livros_base = Livro.objects.all()
-
-    devolucoes_com_multa = []
     hoje = date.today()
     
-    emprestimos_atrasados = Emprestimo.objects.select_related('leitor', 'exemplar__livro').filter(
-        data_devolucao__lt=hoje, 
-        devolucao__isnull=True
-    )
+    leitores_dict = {}
+
+    # 1. Multas consolidadas (Livro devolvido, mas não pago)
+    devolucoes_pendentes = Devolucao.objects.filter(multa_paga=False, valor_multa__gt=0).select_related('emprestimo__leitor')
+    for dev in devolucoes_pendentes:
+        leitor = dev.emprestimo.leitor
+        if leitor.id not in leitores_dict:
+            leitores_dict[leitor.id] = {'leitor': leitor, 'total_multa': decimal.Decimal('0.00'), 'status': 'Multa Pendente'}
+        leitores_dict[leitor.id]['total_multa'] += dev.valor_multa
     
-    total_multas_aberto = decimal.Decimal('0.00')
+    # 2. Multas correntes (Livros atrasados, que ainda não foram devolvidos)
+    emprestimos_atrasados = Emprestimo.objects.select_related('leitor').filter(data_devolucao__lt=hoje, devolucao__isnull=True)
+    for emp in emprestimos_atrasados:
+        valor = services.calcular_valor_multa(emp, hoje)
+        if valor > 0:
+            leitor = emp.leitor
+            if leitor.id not in leitores_dict:
+                leitores_dict[leitor.id] = {'leitor': leitor, 'total_multa': decimal.Decimal('0.00'), 'status': 'Livro em Atraso'}
+            leitores_dict[leitor.id]['total_multa'] += valor
+            if leitores_dict[leitor.id]['status'] != 'Livro em Atraso':
+                leitores_dict[leitor.id]['status'] = 'Atraso e Multa Pendente'
 
-    for emprestimo in emprestimos_atrasados:
-        valor_multa_temp = _calcular_valor_multa(emprestimo, hoje)
-        total_multas_aberto += valor_multa_temp 
-        emprestimo.valor_multa_temp = valor_multa_temp
-        devolucoes_com_multa.append(emprestimo)
+    leitores_inadimplentes = list(leitores_dict.values())
+    
+    # Filtragem e busca
+    if query:
+        q_lower = query.lower()
+        leitores_inadimplentes = [
+            item for item in leitores_inadimplentes
+            if q_lower in item['leitor'].nome.lower() or (item['leitor'].id_leitor and q_lower in item['leitor'].id_leitor.lower())
+        ]
 
-    multas_arrecadadas_valor = Devolucao.objects.aggregate(
-        total_arrecadado=Sum('valor_multa') 
-    )['total_arrecadado']
+    # Ordena os maiores devedores primeiro
+    leitores_inadimplentes.sort(key=lambda x: x['total_multa'], reverse=True)
+
+    total_multas_aberto = sum(item['total_multa'] for item in leitores_dict.values())
+
+    multas_arrecadadas_valor = Devolucao.objects.filter(multa_paga=True).aggregate(total_arrecadado=Sum('valor_multa'))['total_arrecadado']
     
     multas_arrecadadas = multas_arrecadadas_valor if multas_arrecadadas_valor else decimal.Decimal('0.00')
 
     context = {
-        'devolucoes': devolucoes_com_multa,
+        'leitores_inadimplentes': leitores_inadimplentes,
         'total_multas_aberto': total_multas_aberto,
         'multas_arrecadadas': multas_arrecadadas,
     }
@@ -641,11 +688,8 @@ def buscar_leitor(request):
     
     try:
         leitor = Leitor.objects.get(id_leitor=id_leitor)
-        tem_multa = Emprestimo.objects.filter(
-            leitor=leitor, devolucao__isnull=True, data_devolucao__lt=date.today()
-        ).exists()
         
-        return JsonResponse({'nome': leitor.nome, 'tem_multa': tem_multa})
+        return JsonResponse({'nome': leitor.nome, 'tem_multa': leitor.possui_multa})
     except Leitor.DoesNotExist:
         return JsonResponse({'erro': 'Leitor não encontrado'}, status=404)
 
@@ -669,7 +713,7 @@ def buscar_livro(request):
                 'numero_paginas': livro.numero_paginas,
                 'genero' : livro.genero.nome,
                 'classificacao' : livro.classificacao,
-                'capa': livro.capa.url if livro.capa else None
+                'capa': livro.capa.url if livro.capa and livro.capa.name else None
             }
             return JsonResponse(response_data)
         else:
@@ -718,7 +762,7 @@ def buscar_livro_por_id(request):
             'data_publicacao': livro.data_publicacao,
             'numero_paginas': livro.numero_paginas,
             'sinopse': livro.sinopse,
-            'capa_url': livro.capa.url if livro.capa else None
+            'capa_url': livro.capa.url if livro.capa and livro.capa.name else None
         }
         return JsonResponse(response_data)
     except Livro.DoesNotExist:
@@ -734,7 +778,7 @@ def buscar_livro_completo(request):
         if not livro:
             return JsonResponse({'erro': 'Livro não encontrado'}, status=404)
         
-        quantidade_disponivel = Exemplar.objects.filter(livro=livro, status='disponivel').count()
+        quantidade_disponivel = Exemplar.objects.filter(livro=livro, status=Exemplar.Status.DISPONIVEL).count()
         disponivel = quantidade_disponivel > 0
 
         data_devolucao_proxima = None
@@ -753,7 +797,7 @@ def buscar_livro_completo(request):
             'numero_paginas': livro.numero_paginas,
             'genero': livro.genero.nome,
             'classificacao': livro.classificacao,
-            'capa': livro.capa.url if livro.capa else None
+            'capa': livro.capa.url if livro.capa and livro.capa.name else None
         }
         return JsonResponse(response_data)
     except Exception as e:
@@ -773,7 +817,7 @@ def buscar_exemplar(request):
             'numero_paginas': livro.numero_paginas,
             'genero': livro.genero.nome,
             'classificacao': livro.classificacao,
-            'capa': livro.capa.url if livro.capa else None,
+            'capa': livro.capa.url if livro.capa and livro.capa.name else None,
             'status': exemplar.status,
             'status_display': exemplar.get_status_display()
         }
@@ -843,7 +887,7 @@ def fila_reservas(request):
                 leitor = get_object_or_404(Leitor, pk=leitor_id)
                 livro = get_object_or_404(Livro, pk=livro_id)
                 
-                if Reserva.objects.filter(leitor=leitor, livro=livro, status__in=['ativa', 'disponivel']).exists():
+                if Reserva.objects.filter(leitor=leitor, livro=livro, status__in=[Reserva.Status.ATIVA, Reserva.Status.DISPONIVEL]).exists():
                     messages.warning(request, f'O leitor "{leitor.nome}" já possui uma reserva ativa para "{livro.titulo}".')
                 else:
                     Reserva.objects.create(leitor=leitor, livro=livro)
@@ -853,7 +897,7 @@ def fila_reservas(request):
     query = request.GET.get('q', '').strip()
     
     # Trazemos as reservas, omitindo as canceladas/atendidas da visão principal por padrão, e otimizamos com select_related
-    reservas_base = Reserva.objects.select_related('leitor', 'livro').exclude(status__in=['cancelada', 'atendida']).order_by('data_solicitacao')
+    reservas_base = Reserva.objects.select_related('leitor', 'livro').exclude(status__in=[Reserva.Status.CANCELADA, Reserva.Status.ATENDIDA]).order_by('data_solicitacao')
     
     if query:
         reservas = reservas_base.filter(
@@ -881,13 +925,86 @@ def renovacao(request):
 @login_required(login_url='login_view')
 def historico_leitor(request, leitor_id):
     leitor = get_object_or_404(Leitor, pk=leitor_id)
+    
+    # Processar pagamento da multa
+    if request.method == 'POST' and request.POST.get('acao') == 'quitar_multa':
+        devolucao_id = request.POST.get('devolucao_id')
+        if devolucao_id:
+            dev = get_object_or_404(Devolucao, pk=devolucao_id, emprestimo__leitor=leitor)
+            dev.multa_paga = True
+            dev.recebido_por = request.user
+            dev.save()
+            messages.success(request, f'O pagamento de R$ {dev.valor_multa} referente à multa do livro "{dev.emprestimo.exemplar.livro.titulo}" foi quitado!')
+        return redirect('historico_leitor', leitor_id=leitor.id)
+        
     emprestimos = Emprestimo.objects.filter(leitor=leitor).order_by('-data_emprestimo')
+    hoje = date.today()
+    tem_livro_atrasado = False
+    
+    for emp in emprestimos:
+        if not hasattr(emp, 'devolucao'):
+            valor_multa = services.calcular_valor_multa(emp, hoje)
+            emp.valor_multa_pendente = valor_multa
+            emp.is_atrasado = valor_multa > 0
+            if emp.is_atrasado:
+                emp.status_color = "danger"
+                emp.status_display = "Em Atraso"
+                tem_livro_atrasado = True
+            else:
+                emp.status_color = "info text-dark"
+                emp.status_display = "Emprestado"
+        else:
+            emp.status_color = "success"
+            emp.status_display = "Devolvido"
+
+    multas_pendentes = Devolucao.objects.filter(emprestimo__leitor=leitor, multa_paga=False, valor_multa__gt=0).order_by('-data_devolucao_real')
+
     context = {
         'leitor': leitor,
-        'emprestimos': emprestimos
+        'emprestimos': emprestimos,
+        'multas_pendentes': multas_pendentes,
+        'tem_livro_atrasado': tem_livro_atrasado
     }
     return render(request, 'historico_leitor.html', context)
 
 @admin_required
 def historico_financeiro(request):
-    return render(request, 'historico_financeiro.html') # A ser criado na próxima etapa
+    query = request.GET.get('q', '')
+    data_inicio = request.GET.get('data_inicio', '')
+    data_fim = request.GET.get('data_fim', '')
+    
+    # 1. Base query: apenas multas pagas e com valor financeiro
+    devolucoes = Devolucao.objects.filter(
+        multa_paga=True, 
+        valor_multa__gt=0
+    ).select_related(
+        'emprestimo__leitor', 
+        'emprestimo__exemplar__livro', 
+        'recebido_por'
+    ).order_by('-data_devolucao_real', '-id')
+    
+    # 2. Aplicação de Filtros
+    if query:
+        devolucoes = devolucoes.filter(
+            Q(emprestimo__leitor__nome__icontains=query) |
+            Q(recebido_por__username__icontains=query) |
+            Q(emprestimo__leitor__id_leitor__icontains=query)
+        )
+        
+    if data_inicio:
+        devolucoes = devolucoes.filter(data_devolucao_real__gte=data_inicio)
+    if data_fim:
+        devolucoes = devolucoes.filter(data_devolucao_real__lte=data_fim)
+        
+    # 3. Totais para os Cards do Dashboard
+    hoje = timezone.now().date()
+    
+    total_hoje = Devolucao.objects.filter(multa_paga=True, valor_multa__gt=0, data_devolucao_real=hoje).aggregate(Sum('valor_multa'))['valor_multa__sum'] or decimal.Decimal('0.00')
+    total_mes = Devolucao.objects.filter(multa_paga=True, valor_multa__gt=0, data_devolucao_real__year=hoje.year, data_devolucao_real__month=hoje.month).aggregate(Sum('valor_multa'))['valor_multa__sum'] or decimal.Decimal('0.00')
+    total_filtrado = devolucoes.aggregate(Sum('valor_multa'))['valor_multa__sum'] or decimal.Decimal('0.00')
+    
+    context = {
+        'devolucoes': devolucoes, 'total_hoje': total_hoje, 'total_mes': total_mes,
+        'total_filtrado': total_filtrado, 'query': query, 'data_inicio': data_inicio, 'data_fim': data_fim
+    }
+    return render(request, 'historico_financeiro.html', context)

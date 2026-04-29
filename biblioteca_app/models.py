@@ -45,16 +45,16 @@ class ImagemLivro(models.Model):
         return f"Imagem adicional de {self.livro.titulo}"
 
 class Exemplar(models.Model):
-    STATUS_CHOICES = [
-        ('disponivel', 'Disponível'),
-        ('emprestado', 'Emprestado'),
-        ('manutencao', 'Em Manutenção'),
-        ('perdido', 'Perdido'),
-    ]
+    class Status(models.TextChoices):
+        DISPONIVEL = 'disponivel', 'Disponível'
+        EMPRESTADO = 'emprestado', 'Emprestado'
+        MANUTENCAO = 'manutencao', 'Em Manutenção'
+        PERDIDO = 'perdido', 'Perdido'
+        
     livro = models.ForeignKey(Livro, on_delete=models.CASCADE, related_name='exemplares')
     codigo_tombo = models.CharField(max_length=50, unique=True, help_text="Código identificador único do exemplar físico")
     estado_conservacao = models.CharField(max_length=100, default='Bom')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='disponivel')
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.DISPONIVEL)
 
     def __str__(self):
         return f"{self.livro.titulo} - Tombo: {self.codigo_tombo}"
@@ -70,35 +70,42 @@ class Leitor(models.Model):
     endereco = models.CharField(max_length=255)
     complemento = models.CharField(max_length=100, blank=True, null=True)
     cidade = models.CharField(max_length=100)
-    RECEBIMENTO_ALERTAS_CHOICES = [
-        ('email', 'Email'),
-        ('celular', 'Celular'),
-    ]
-    recebimento_alertas = models.CharField(max_length=10, choices=RECEBIMENTO_ALERTAS_CHOICES, default='email')
+    
+    class AlertasChoices(models.TextChoices):
+        EMAIL = 'email', 'Email'
+        CELULAR = 'celular', 'Celular'
+        
+    recebimento_alertas = models.CharField(max_length=10, choices=AlertasChoices.choices, default=AlertasChoices.EMAIL)
     ativo = models.BooleanField(default=True, help_text="Desmarque para bloquear temporariamente o leitor")
     foto = models.ImageField(upload_to='fotos_leitores/', null=True, blank=True)
 
     @property
     def possui_multa(self):
+        if hasattr(self, 'tem_atraso') and hasattr(self, 'tem_divida'):
+            return self.tem_atraso or self.tem_divida
+            
         if hasattr(self, 'tem_multa_anotada'):
             return self.tem_multa_anotada
+            
         hoje = timezone.now().date()
-        return Emprestimo.objects.filter(leitor=self, data_devolucao__lt=hoje, devolucao__isnull=True).exists()
+        tem_atraso = Emprestimo.objects.filter(leitor=self, data_devolucao__lt=hoje, devolucao__isnull=True).exists()
+        tem_divida = Devolucao.objects.filter(emprestimo__leitor=self, multa_paga=False, valor_multa__gt=0).exists()
+        return tem_atraso or tem_divida
 
     def __str__(self):
         return self.nome
         
 class Reserva(models.Model):
-    STATUS_CHOICES = [
-        ('ativa', 'Ativa - Na Fila'),
-        ('disponivel', 'Livro Disponível (Aguardando Retirada)'),
-        ('atendida', 'Atendida (Empréstimo Realizado)'),
-        ('cancelada', 'Cancelada'),
-    ]
+    class Status(models.TextChoices):
+        ATIVA = 'ativa', 'Ativa - Na Fila'
+        DISPONIVEL = 'disponivel', 'Livro Disponível (Aguardando Retirada)'
+        ATENDIDA = 'atendida', 'Atendida (Empréstimo Realizado)'
+        CANCELADA = 'cancelada', 'Cancelada'
+        
     leitor = models.ForeignKey(Leitor, on_delete=models.CASCADE, related_name='reservas')
     livro = models.ForeignKey(Livro, on_delete=models.CASCADE, related_name='reservas')
     data_solicitacao = models.DateTimeField(default=timezone.now)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ativa')
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.ATIVA)
 
     def __str__(self):
         return f"Reserva: {self.leitor.nome} -> {self.livro.titulo} ({self.get_status_display()})"
@@ -132,16 +139,22 @@ class Configuracao(models.Model):
         return "Configurações do Sistema"
 
 class PerfilUsuario(models.Model):
-    FUNCOES = [
-        ("administrador", "Administrador"),
-        ("bibliotecario", "Bibliotecário"),
-    ]
+    class FuncaoChoices(models.TextChoices):
+        ADMINISTRADOR = 'administrador', 'Administrador'
+        BIBLIOTECARIO = 'bibliotecario', 'Bibliotecário'
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="perfil")
+    nome = models.CharField(max_length=200, null=True, blank=True)
+    data_nascimento = models.DateField(null=True, blank=True)
+    celular = models.CharField(max_length=15, null=True, blank=True)
     email = models.EmailField()
     cpf = models.CharField(max_length=14, unique=True)
+    cep = models.CharField(max_length=9, null=True, blank=True)
     endereco = models.CharField(max_length=255)
-    funcao = models.CharField(max_length=20, choices=FUNCOES, default="bibliotecario" ) 
+    complemento = models.CharField(max_length=100, blank=True, null=True)
+    cidade = models.CharField(max_length=100, null=True, blank=True)
+    foto = models.ImageField(upload_to='fotos_funcionarios/', null=True, blank=True)
+    funcao = models.CharField(max_length=20, choices=FuncaoChoices.choices, default=FuncaoChoices.BIBLIOTECARIO) 
 
     def __str__(self):
         return f"{self.user.username} - {self.funcao}"

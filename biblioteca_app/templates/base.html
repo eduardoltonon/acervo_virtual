@@ -10,6 +10,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome (Ícones) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- SweetAlert2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css" rel="stylesheet">
     
     <style>
         body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -86,18 +88,9 @@
         <!-- Accordion Wrapper do Menu -->
         <div id="sidebarAccordion">
             <!-- Acervo -->
-            <div class="has-submenu">
-                <a href="#collapseAcervo" data-bs-toggle="collapse" aria-expanded="false" class="d-flex justify-content-between align-items-center">
-                    <span><i class="fa-solid fa-book me-2"></i> Acervo</span>
-                    <i class="fa-solid fa-chevron-down submenu-icon" style="font-size: 0.8rem;"></i>
-                </a>
-                <div class="collapse" id="collapseAcervo" data-bs-parent="#sidebarAccordion">
-                    <ul class="submenu">
-                        <li><a href="{% url 'estoque' %}">Buscar Livros</a></li>
-                        <li><a href="{% url 'cadastro_livros' %}">Cadastrar Novo</a></li>
-                    </ul>
-                </div>
-            </div>
+            <a href="{% url 'estoque' %}" class="{% if '/acervo/' in request.path %}active{% endif %}">
+                <i class="fa-solid fa-book me-2"></i> Acervo
+            </a>
 
             <!-- Circulação -->
             <div class="has-submenu">
@@ -197,6 +190,41 @@
     <!-- Scripts Bootstrap -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Sobrescreve o alert padrão do navegador (alert feio) para usar o modal padronizado
+        window.alert = function(message) {
+            Swal.fire({
+                title: 'Aviso do Sistema',
+                text: message,
+                icon: 'warning',
+                confirmButtonColor: '#4e8c80',
+            });
+        };
+
+        // Função global para interceptar formulários e exibir pop-up estilizado
+        function confirmarSubmit(event, titulo, texto, icone = 'warning') {
+            event.preventDefault(); // Interrompe o envio imediato do formulário
+            const form = event.target; 
+            
+            Swal.fire({
+                title: titulo,
+                text: texto,
+                icon: icone,
+                showCancelButton: true,
+                confirmButtonColor: '#4e8c80', // Cor verde-água escurecida do sistema
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sim, confirmar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit(); // Envia o formulário se o usuário clicou em sim
+                }
+            });
+        }
+    </script>
+
     <!-- Configuração de Rotas Dinâmicas para o JavaScript -->
     <script>
         window.apiUrls = {

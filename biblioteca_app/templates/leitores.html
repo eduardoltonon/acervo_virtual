@@ -43,7 +43,7 @@
                         <td onclick="event.stopPropagation();">
                             {% if request.session.funcao == 'administrador' or request.user.is_superuser %}
                             <button type="button" class="btn btn-sm btn-outline-secondary btn-editar" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                            <form method="POST" action="{% url 'excluir_leitor' leitor.id %}" style="display:inline;">
+                            <form method="POST" action="{% url 'excluir_leitor' leitor.id %}" style="display:inline;" onsubmit="confirmarSubmit(event, 'Excluir Leitor', 'Tem certeza que deseja excluir o perfil deste leitor permanentemente?', 'error');">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-sm btn-outline-danger btn-excluir" title="Excluir"><i class="fa-solid fa-trash"></i></button>
                             </form>

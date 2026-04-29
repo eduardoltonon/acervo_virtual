@@ -58,7 +58,7 @@
                                     <i class="fa-solid fa-hand-holding-hand"></i>
                                 </a>
                                 {% endif %}
-                                <form method="POST" action="{% url 'fila_reservas' %}" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja cancelar esta reserva?');">
+                            <form method="POST" action="{% url 'fila_reservas' %}" style="display:inline;" onsubmit="confirmarSubmit(event, 'Cancelar Reserva', 'Tem certeza que deseja cancelar esta reserva?', 'warning');">
                                     {% csrf_token %}
                                     <input type="hidden" name="reserva_id" value="{{ reserva.id }}">
                                     <input type="hidden" name="acao" value="cancelar">
