@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Fila de Reservas | Acervo Virtual{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold text-dark mb-1"><i class="fa-solid fa-list-ol me-2 text-primary"></i> Fila de Reservas</h4>
+            <p class="text-muted small mb-0">Gerencie os leitores que estão aguardando disponibilidade de livros</p>
+        </div>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-nova-reserva">
+            <i class="fa-solid fa-plus"></i> Nova Reserva
+        </button>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form action="{% url 'fila_reservas' %}" method="GET" class="d-flex mb-0">
+                <input type="text" name="q" value="{{ query }}" class="form-control me-2" placeholder="Pesquisar por título do livro ou nome do leitor...">
+                <button type="submit" class="btn btn-primary px-4"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0 table-responsive">
+            <table class="table table-hover align-middle mb-0 text-center">
+                <thead class="table-light">
+                    <tr>
+                        <th class="text-start ps-4">Livro</th>
+                        <th>Leitor</th>
+                        <th>Data da Solicitação</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reserva in reservas %}
+                    <tr>
+                        <td class="text-start ps-4">
+                            <strong>{{ reserva.livro.titulo }}</strong><br>
+                            <small class="text-muted">{{ reserva.livro.autor }}</small>
+                        </td>
+                        <td>{{ reserva.leitor.nome }}</td>
+                        <td>{{ reserva.data_solicitacao|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            {% if reserva.status == 'ativa' %}
+                                <span class="badge bg-info text-dark px-3 py-2"><i class="fa-solid fa-clock me-1"></i> Na Fila</span>
+                            {% elif reserva.status == 'disponivel' %}
+                                <span class="badge bg-success px-3 py-2"><i class="fa-solid fa-check me-1"></i> Aguardando Retirada</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex justify-content-center gap-2">
+                                {% if reserva.status == 'disponivel' %}
+                                <a href="{% url 'emprestimo_com_livro' reserva.livro.id %}" class="btn btn-sm btn-success" title="Converter em Empréstimo">
+                                    <i class="fa-solid fa-hand-holding-hand"></i>
+                                </a>
+                                {% endif %}
+                                <form method="POST" action="{% url 'fila_reservas' %}" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja cancelar esta reserva?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="reserva_id" value="{{ reserva.id }}">
+                                    <input type="hidden" name="acao" value="cancelar">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Cancelar Reserva">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center py-5 text-muted">Nenhuma reserva ativa na fila.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL NOVA RESERVA -->
+<div class="modal fade" id="modal-nova-reserva" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-list-ol me-2 text-primary"></i> Adicionar à Fila de Reservas</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'fila_reservas' %}">
+                <div class="modal-body p-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="acao" value="nova_reserva">
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Selecionar Leitor</label>
+                        <select name="leitor_id" class="form-select" required>
+                            <option value="" selected disabled>Escolha um leitor ativo...</option>
+                            {% for leitor in leitores %}
+                            <option value="{{ leitor.id }}">{{ leitor.nome }} ({{ leitor.cpf }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Selecionar Livro</label>
+                        <select name="livro_id" class="form-select" required>
+                            <option value="" selected disabled>Escolha o livro desejado...</option>
+                            {% for livro in livros %}
+                            <option value="{{ livro.id }}">{{ livro.titulo }} - {{ livro.autor.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="alert alert-info small mt-3 mb-0">
+                        <i class="fa-solid fa-circle-info me-1"></i> A reserva entrará com status <strong>"Na Fila"</strong> e o leitor será notificado quando um exemplar for devolvido.
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-top-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-2"></i> Confirmar Reserva</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import IntegrityError
 from django.contrib import messages
-from .models import Livro, Exemplar, Leitor, Emprestimo, Devolucao, Configuracao, PerfilUsuario, Autor, Editora, Genero
+from .models import Livro, Exemplar, Leitor, Emprestimo, Devolucao, Configuracao, PerfilUsuario, Autor, Editora, Genero, Reserva
 from django.utils import timezone
 from datetime import datetime, date
 import decimal, json, base64, logging
@@ -787,7 +787,56 @@ def relatorio(request):
 
 @login_required(login_url='login_view')
 def fila_reservas(request):
-    return render(request, 'fila_reservas.html') # A ser criado na próxima etapa
+    if request.method == 'POST':
+        acao = request.POST.get('acao')
+        
+        if acao == 'cancelar':
+            reserva_id = request.POST.get('reserva_id')
+            if reserva_id:
+                reserva = get_object_or_404(Reserva, pk=reserva_id)
+                reserva.status = 'cancelada'
+                reserva.save()
+                messages.success(request, f'A reserva do livro "{reserva.livro.titulo}" para {reserva.leitor.nome} foi cancelada.')
+            return redirect('fila_reservas')
+            
+        elif acao == 'nova_reserva':
+            leitor_id = request.POST.get('leitor_id')
+            livro_id = request.POST.get('livro_id')
+            
+            if leitor_id and livro_id:
+                leitor = get_object_or_404(Leitor, pk=leitor_id)
+                livro = get_object_or_404(Livro, pk=livro_id)
+                
+                if Reserva.objects.filter(leitor=leitor, livro=livro, status__in=['ativa', 'disponivel']).exists():
+                    messages.warning(request, f'O leitor "{leitor.nome}" já possui uma reserva ativa para "{livro.titulo}".')
+                else:
+                    Reserva.objects.create(leitor=leitor, livro=livro)
+                    messages.success(request, f'Reserva criada com sucesso para "{leitor.nome}".')
+            return redirect('fila_reservas')
+            
+    query = request.GET.get('q', '').strip()
+    
+    # Trazemos as reservas, omitindo as canceladas/atendidas da visão principal por padrão, e otimizamos com select_related
+    reservas_base = Reserva.objects.select_related('leitor', 'livro').exclude(status__in=['cancelada', 'atendida']).order_by('data_solicitacao')
+    
+    if query:
+        reservas = reservas_base.filter(
+            Q(livro__titulo__icontains=query) |
+            Q(leitor__nome__icontains=query)
+        )
+    else:
+        reservas = reservas_base.all()
+
+    leitores_ativos = Leitor.objects.filter(ativo=True).order_by('nome')
+    livros = Livro.objects.all().order_by('titulo')
+
+    context = {
+        'reservas': reservas, 
+        'query': query,
+        'leitores': leitores_ativos,
+        'livros': livros
+    }
+    return render(request, 'fila_reservas.html', context)
 
 @login_required(login_url='login_view')
 def renovacao(request):
