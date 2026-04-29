@@ -3,6 +3,11 @@
 {% block title %}Novo Empréstimo | Acervo Virtual{% endblock %}
 
 {% block content %}
+<style>
+    .livros-selecionados-container { max-height: 500px; overflow-y: auto; }
+    .modal-background { background-color: rgba(0,0,0,0.5); }
+</style>
+
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -16,7 +21,7 @@
                 <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
                     <h5 class="fw-bold"><i class="fa-solid fa-book-open text-primary me-2"></i> Obras Selecionadas</h5>
                 </div>
-                <div class="card-body p-3" id="livros-selecionados-container" style="max-height: 500px; overflow-y: auto;">
+                <div class="card-body p-3 livros-selecionados-container" id="livros-selecionados-container">
                     {% if livro_pre_selecionado %}
                     <div class="alert alert-info py-2 text-center" id="dica-pre-selecionado">
                         <p class="text-dark small mb-0">Você selecionou <strong>{{ livro_pre_selecionado.titulo }}</strong>. Escaneie o tombo do livro à direita para confirmar.</p>
@@ -36,7 +41,7 @@
                         {% csrf_token %}
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">ID do Leitor (Matrícula)</label>
+                                <label for="id_leitor" class="form-label fw-bold">ID do Leitor (Matrícula)</label>
                                 <input type="text" id="id_leitor" name="id_leitor" class="form-control form-control-lg border-primary" placeholder="Ex: MAT1234" required autofocus>
                             </div>
                             <div class="col-md-6 d-flex flex-column justify-content-center">
@@ -45,14 +50,14 @@
                             </div>
                             <div class="col-12 mt-4">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <label class="form-label fw-bold mb-0">Códigos de Tombo (Livros)</label>
+                                    <label for="codigo_tombo" class="form-label fw-bold mb-0">Códigos de Tombo (Livros)</label>
                                     <button type="button" class="btn btn-sm btn-outline-primary" onclick="adicionarCampoTombo()"><i class="fa-solid fa-plus me-1"></i> Empréstimo em Lote</button>
                                 </div>
                                 <div id="tombos-container">
                                     <div class="input-group mb-2 tombo-group shadow-sm">
                                         <span class="input-group-text bg-light"><i class="fa-solid fa-barcode"></i></span>
-                                        <input list="lista-tombos" type="text" name="codigo_tombo" class="form-control form-control-lg border-danger tombo-input" placeholder="Escaneie ou digite o código do exemplar" required onchange="buscarDetalhesTombo(this)">
-                                        <button type="button" class="btn btn-outline-danger btn-remover-tombo d-none" onclick="removerTombo(this)" title="Remover exemplar"><i class="fa-solid fa-trash"></i></button>
+                                        <input list="lista-tombos" type="text" id="codigo_tombo" name="codigo_tombo" class="form-control form-control-lg border-danger tombo-input" placeholder="Escaneie ou digite o código do exemplar" required onchange="buscarDetalhesTombo(this)">
+                                        <button type="button" class="btn btn-outline-danger btn-remover-tombo d-none" onclick="removerTombo(this)" title="Remover exemplar" aria-label="Remover exemplar"><i class="fa-solid fa-trash"></i></button>
                                     </div>
                                 </div>
                                 <datalist id="lista-tombos">
@@ -62,11 +67,11 @@
                                 </datalist>
                             </div>
                             <div class="col-md-6 mt-4">
-                                <label class="form-label fw-bold">Data do Empréstimo</label>
+                                <label for="data_emprestimo" class="form-label fw-bold">Data do Empréstimo</label>
                                 <input type="date" id="data_emprestimo" name="data_emprestimo" class="form-control" required>
                             </div>
                             <div class="col-md-6 mt-4">
-                                <label class="form-label fw-bold text-danger">Data de Devolução Prevista</label>
+                                <label for="data_devolucao" class="form-label fw-bold text-danger">Data de Devolução Prevista</label>
                                 <input type="date" id="data_devolucao" name="data_devolucao" class="form-control" required>
                             </div>
                         </div>
@@ -81,7 +86,7 @@
         </div>
     </div>
 
-    <div id="modal-livro-indisponivel" class="modal" style="background-color: rgba(0,0,0,0.5);">
+    <div id="modal-livro-indisponivel" class="modal modal-background">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-warning">

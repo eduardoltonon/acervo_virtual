@@ -3,6 +3,11 @@
 {% block title %}Buscar Leitores | Acervo Virtual{% endblock %}
 
 {% block content %}
+<style>
+    .cursor-pointer { cursor: pointer; }
+    .form-inline { display: inline; }
+</style>
+
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -33,7 +38,7 @@
                 </thead>
                 <tbody>
                     {% for leitor in leitores %}
-                    <tr class="leitor-item" style="cursor: pointer;" onclick="window.location.href='{% url 'historico_leitor' leitor.id %}'" data-leitor-id="{{ leitor.id }}" data-id-leitor="{{ leitor.id_leitor|default:'' }}" data-nome="{{ leitor.nome }}" data-celular="{{ leitor.celular }}" data-email="{{ leitor.email }}" data-cep="{{ leitor.cep }}" data-endereco="{{ leitor.endereco }}" data-complemento="{{ leitor.complemento }}" data-cidade="{{ leitor.cidade }}" data-alertas="{{ leitor.recebimento_alertas }}" data-ativo="{{ leitor.ativo|yesno:'true,false' }}">
+                    <tr class="leitor-item cursor-pointer" onclick="window.location.href='{% url 'historico_leitor' leitor.id %}';" data-leitor-id="{{ leitor.id }}" data-id-leitor="{{ leitor.id_leitor|default:'' }}" data-nome="{{ leitor.nome }}" data-celular="{{ leitor.celular }}" data-email="{{ leitor.email }}" data-cep="{{ leitor.cep }}" data-endereco="{{ leitor.endereco }}" data-complemento="{{ leitor.complemento }}" data-cidade="{{ leitor.cidade }}" data-alertas="{{ leitor.recebimento_alertas }}" data-ativo="{{ leitor.ativo|yesno:'true,false' }}">
                         <td class="text-primary fw-bold">{{ leitor.id_leitor|default:"-" }}</td>
                         <td><strong>{{ leitor.nome }}</strong></td>
                         <td>{{ leitor.email }}</td>
@@ -43,7 +48,7 @@
                         <td onclick="event.stopPropagation();">
                             {% if request.session.funcao == 'administrador' or request.user.is_superuser %}
                             <button type="button" class="btn btn-sm btn-outline-secondary btn-editar" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                            <form method="POST" action="{% url 'excluir_leitor' leitor.id %}" style="display:inline;" onsubmit="confirmarSubmit(event, 'Excluir Leitor', 'Tem certeza que deseja excluir o perfil deste leitor permanentemente?', 'error');">
+                            <form method="POST" action="{% url 'excluir_leitor' leitor.id %}" class="form-inline" onsubmit="confirmarSubmit(event, 'Excluir Leitor', 'Tem certeza que deseja excluir o perfil deste leitor permanentemente?', 'error');">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-sm btn-outline-danger btn-excluir" title="Excluir"><i class="fa-solid fa-trash"></i></button>
                             </form>
@@ -71,16 +76,16 @@
                         {% csrf_token %}
                         <input type="hidden" id="leitor-id-edicao" name="leitor_id">
                         <div class="row g-3">
-                            <div class="col-md-4"><label class="form-label">ID (Matrícula)</label><input type="text" id="id_leitor-edicao" name="id_leitor" class="form-control"></div>
-                            <div class="col-md-8"><label class="form-label">Nome Completo</label><input type="text" id="nome-edicao" name="nome" class="form-control"></div>
-                            <div class="col-md-6"><label class="form-label">Celular</label><input type="text" id="celular-edicao" name="celular" class="form-control"></div>
-                            <div class="col-md-6"><label class="form-label">E-mail</label><input type="email" id="email-edicao" name="email" class="form-control"></div>
-                            <div class="col-md-4"><label class="form-label">CEP</label><input type="text" id="cep-edicao" name="cep" class="form-control"></div>
-                            <div class="col-md-8"><label class="form-label">Endereço</label><input type="text" id="endereco-edicao" name="endereco" class="form-control"></div>
-                            <div class="col-md-6"><label class="form-label">Complemento</label><input type="text" id="complemento-edicao" name="complemento" class="form-control"></div>
-                            <div class="col-md-6"><label class="form-label">Cidade</label><input type="text" id="cidade-edicao" name="cidade" class="form-control"></div>
+                            <div class="col-md-4"><label for="id_leitor-edicao" class="form-label">ID (Matrícula)</label><input type="text" id="id_leitor-edicao" name="id_leitor" class="form-control"></div>
+                            <div class="col-md-8"><label for="nome-edicao" class="form-label">Nome Completo</label><input type="text" id="nome-edicao" name="nome" class="form-control"></div>
+                            <div class="col-md-6"><label for="celular-edicao" class="form-label">Celular</label><input type="text" id="celular-edicao" name="celular" class="form-control"></div>
+                            <div class="col-md-6"><label for="email-edicao" class="form-label">E-mail</label><input type="email" id="email-edicao" name="email" class="form-control"></div>
+                            <div class="col-md-4"><label for="cep-edicao" class="form-label">CEP</label><input type="text" id="cep-edicao" name="cep" class="form-control"></div>
+                            <div class="col-md-8"><label for="endereco-edicao" class="form-label">Endereço</label><input type="text" id="endereco-edicao" name="endereco" class="form-control"></div>
+                            <div class="col-md-6"><label for="complemento-edicao" class="form-label">Complemento</label><input type="text" id="complemento-edicao" name="complemento" class="form-control"></div>
+                            <div class="col-md-6"><label for="cidade-edicao" class="form-label">Cidade</label><input type="text" id="cidade-edicao" name="cidade" class="form-control"></div>
                             <div class="col-md-6">
-                                <label class="form-label">Receber Alertas por</label>
+                                <label for="recebimento_alertas-edicao" class="form-label">Receber Alertas por</label>
                                 <select id="recebimento_alertas-edicao" name="recebimento_alertas" class="form-select">
                                     <option value="email">Email</option>
                                     <option value="celular">Celular</option>

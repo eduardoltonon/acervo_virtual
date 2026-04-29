@@ -56,7 +56,7 @@
         
         /* Submenus */
         .submenu { list-style: none; padding-left: 0; background-color: #1e2225; margin-bottom: 0;}
-        .submenu-icon { transition: transform 0.3s ease; }
+        .submenu-icon { transition: transform 0.3s ease; font-size: 0.8rem; }
         .has-submenu a[aria-expanded="true"] .submenu-icon { transform: rotate(180deg); }
         .submenu a { padding: 10px 20px 10px 45px; font-size: 0.9rem; }
         .submenu a:hover { background-color: #495057; border-radius: 0; margin-right: 0;}
@@ -96,7 +96,7 @@
             <div class="has-submenu">
                 <a href="#collapseCirculacao" data-bs-toggle="collapse" aria-expanded="false" class="d-flex justify-content-between align-items-center">
                     <span><i class="fa-solid fa-arrows-rotate me-2"></i> Circulação</span>
-                    <i class="fa-solid fa-chevron-down submenu-icon" style="font-size: 0.8rem;"></i>
+                    <i class="fa-solid fa-chevron-down submenu-icon"></i>
                 </a>
                 <div class="collapse" id="collapseCirculacao" data-bs-parent="#sidebarAccordion">
                     <ul class="submenu">
@@ -111,7 +111,7 @@
             <div class="has-submenu">
                 <a href="#collapseLeitores" data-bs-toggle="collapse" aria-expanded="false" class="d-flex justify-content-between align-items-center">
                     <span><i class="fa-solid fa-users me-2"></i> Leitores</span>
-                    <i class="fa-solid fa-chevron-down submenu-icon" style="font-size: 0.8rem;"></i>
+                    <i class="fa-solid fa-chevron-down submenu-icon"></i>
                 </a>
                 <div class="collapse" id="collapseLeitores" data-bs-parent="#sidebarAccordion">
                     <ul class="submenu">
@@ -125,7 +125,7 @@
             <div class="has-submenu">
                 <a href="#collapseFinanceiro" data-bs-toggle="collapse" aria-expanded="false" class="d-flex justify-content-between align-items-center">
                     <span><i class="fa-solid fa-money-bill-wave me-2"></i> Financeiro</span>
-                    <i class="fa-solid fa-chevron-down submenu-icon" style="font-size: 0.8rem;"></i>
+                    <i class="fa-solid fa-chevron-down submenu-icon"></i>
                 </a>
                 <div class="collapse" id="collapseFinanceiro" data-bs-parent="#sidebarAccordion">
                     <ul class="submenu">
@@ -140,7 +140,7 @@
             <div class="has-submenu">
                 <a href="#collapseAdmin" data-bs-toggle="collapse" aria-expanded="false" class="d-flex justify-content-between align-items-center">
                     <span><i class="fa-solid fa-gear me-2"></i> Administração</span>
-                    <i class="fa-solid fa-chevron-down submenu-icon" style="font-size: 0.8rem;"></i>
+                    <i class="fa-solid fa-chevron-down submenu-icon"></i>
                 </a>
                 <div class="collapse" id="collapseAdmin" data-bs-parent="#sidebarAccordion">
                     <ul class="submenu">
@@ -164,7 +164,7 @@
     <div class="main-content">
         <!-- Header Mobile (Aparece só no celular) -->
         <nav class="navbar navbar-light bg-white shadow-sm mb-4 d-md-none rounded p-3">
-            <button class="btn btn-dark" onclick="document.getElementById('sidebar').classList.toggle('show')">
+            <button class="btn btn-dark" onclick="document.getElementById('sidebar').classList.toggle('show')" aria-label="Abrir Menu">
                 <i class="fa-solid fa-bars"></i>
             </button>
             <span class="navbar-brand mb-0 h1 fw-bold">ACERVO</span>

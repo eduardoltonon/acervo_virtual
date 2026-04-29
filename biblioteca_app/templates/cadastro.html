@@ -3,6 +3,11 @@
 {% block title %}Novo Funcionário | Acervo Virtual{% endblock %}
 
 {% block content %}
+<style>
+    .video-camera-preview { object-fit: cover; }
+    .img-camera-preview { object-fit: cover; }
+</style>
+
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -18,16 +23,16 @@
                 <input type="hidden" name="form-action" value="cadastro-usuario">
                 <div class="row g-4">
                     <div class="col-md-4">
-                        <label class="form-label fw-bold">Nome de Usuário (Login)</label>
-                        <input type="text" name="username" class="form-control" placeholder="Ex: joao.silva" required>
+                        <label for="id_username" class="form-label fw-bold">Nome de Usuário (Login)</label>
+                        <input type="text" id="id_username" name="username" class="form-control" placeholder="Ex: joao.silva" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-bold">Senha de Acesso</label>
-                        <input type="password" name="password" class="form-control" required>
+                        <label for="id_password" class="form-label fw-bold">Senha de Acesso</label>
+                        <input type="password" id="id_password" name="password" class="form-control" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-danger">Função (Permissões de Sistema)</label>
-                        <select name="funcao" class="form-select border-danger" required>
+                        <label for="id_funcao" class="form-label fw-bold text-danger">Função (Permissões de Sistema)</label>
+                        <select name="funcao" id="id_funcao" class="form-select border-danger" required aria-label="Função">
                             <option value="" selected disabled>Selecione uma função...</option>
                             <option value="administrador">Administrador (Acesso Total)</option>
                             <option value="bibliotecario">Bibliotecário (Catálogo e Circulação)</option>
@@ -36,23 +41,23 @@
                     
                     <div class="col-12 mt-5 mb-2 border-bottom"><h5 class="fw-bold text-secondary">Dados Pessoais</h5></div>
                     
-                    <div class="col-md-8"><label class="form-label fw-bold">Nome Completo</label><input type="text" name="nome" class="form-control" required></div>
-                    <div class="col-md-4"><label class="form-label fw-bold">CPF</label><input type="text" name="cpf" class="form-control" placeholder="Apenas números" required></div>
-                    <div class="col-md-4"><label class="form-label fw-bold">Data de Nascimento</label><input type="date" name="data_nascimento" class="form-control" required></div>
-                    <div class="col-md-4"><label class="form-label fw-bold">E-mail</label><input type="email" name="email" class="form-control" required></div>
-                    <div class="col-md-4"><label class="form-label fw-bold">Celular</label><input type="tel" name="celular" class="form-control" required></div>
-                    <div class="col-md-3"><label class="form-label fw-bold">CEP</label><input type="text" name="cep" class="form-control" required></div>
-                    <div class="col-md-9"><label class="form-label fw-bold">Endereço Completo</label><input type="text" name="endereco" class="form-control" required></div>
-                    <div class="col-md-6"><label class="form-label fw-bold">Complemento</label><input type="text" name="complemento" class="form-control"></div>
-                    <div class="col-md-6"><label class="form-label fw-bold">Cidade</label><input type="text" name="cidade" class="form-control" required></div>
+                    <div class="col-md-8"><label for="id_nome" class="form-label fw-bold">Nome Completo</label><input type="text" id="id_nome" name="nome" class="form-control" required></div>
+                    <div class="col-md-4"><label for="id_cpf" class="form-label fw-bold">CPF</label><input type="text" id="id_cpf" name="cpf" class="form-control" placeholder="Apenas números" required></div>
+                    <div class="col-md-4"><label for="id_data_nascimento" class="form-label fw-bold">Data de Nascimento</label><input type="date" id="id_data_nascimento" name="data_nascimento" class="form-control" required></div>
+                    <div class="col-md-4"><label for="id_email" class="form-label fw-bold">E-mail</label><input type="email" id="id_email" name="email" class="form-control" required></div>
+                    <div class="col-md-4"><label for="id_celular" class="form-label fw-bold">Celular</label><input type="tel" id="id_celular" name="celular" class="form-control" required></div>
+                    <div class="col-md-3"><label for="id_cep" class="form-label fw-bold">CEP</label><input type="text" id="id_cep" name="cep" class="form-control" required></div>
+                    <div class="col-md-9"><label for="id_endereco" class="form-label fw-bold">Endereço Completo</label><input type="text" id="id_endereco" name="endereco" class="form-control" required></div>
+                    <div class="col-md-6"><label for="id_complemento" class="form-label fw-bold">Complemento</label><input type="text" id="id_complemento" name="complemento" class="form-control"></div>
+                    <div class="col-md-6"><label for="id_cidade" class="form-label fw-bold">Cidade</label><input type="text" id="id_cidade" name="cidade" class="form-control" required></div>
                     
                     <!-- Câmera para Foto do Funcionário -->
                     <div class="col-12 mt-4">
                         <label class="form-label fw-bold text-dark"><i class="fa-solid fa-camera text-primary me-2"></i>Foto do Funcionário (Opcional)</label>
                         <div class="d-flex flex-column align-items-center bg-light p-4 rounded shadow-sm border">
-                            <video id="video-camera" width="320" height="240" class="border rounded shadow-sm d-none" style="object-fit: cover;" autoplay></video>
+                            <video id="video-camera" width="320" height="240" class="border rounded shadow-sm d-none video-camera-preview" autoplay></video>
                             <canvas id="canvas-foto" width="320" height="240" class="d-none"></canvas>
-                            <img id="img-preview" class="border rounded shadow-sm d-none mb-2" width="320" height="240" style="object-fit: cover;">
+                            <img id="img-preview" class="border rounded shadow-sm d-none mb-2 img-camera-preview" width="320" height="240" alt="Pré-visualização da foto">
                             
                             <div class="mt-3 d-flex gap-2">
                                 <button type="button" id="btn-abrir-camera" class="btn btn-outline-primary fw-bold px-4">

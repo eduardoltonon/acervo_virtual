@@ -3,6 +3,11 @@
 {% block title %}Funcionários | Acervo Virtual{% endblock %}
 
 {% block content %}
+<style>
+    .avatar-img { width: 45px; height: 45px; object-fit: cover; }
+    .avatar-placeholder { width: 45px; height: 45px; }
+    .form-inline { display: inline; }
+</style>
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -28,9 +33,9 @@
                         <td>
                             <div class="d-flex align-items-center">
                                 {% if usuario.perfil.foto %}
-                                    <img src="{{ usuario.perfil.foto.url }}" class="rounded-circle me-3 shadow-sm" style="width: 45px; height: 45px; object-fit: cover;">
+                                    <img src="{{ usuario.perfil.foto.url }}" class="rounded-circle me-3 shadow-sm avatar-img" alt="Foto de {{ usuario.perfil.nome|default:usuario.username }}">
                                 {% else %}
-                                    <div class="bg-light rounded-circle d-flex justify-content-center align-items-center me-3 shadow-sm text-primary" style="width: 45px; height: 45px;"><i class="fa-solid fa-user"></i></div>
+                                    <div class="bg-light rounded-circle d-flex justify-content-center align-items-center me-3 shadow-sm text-primary avatar-placeholder"><i class="fa-solid fa-user"></i></div>
                                 {% endif %}
                                 <div>
                                     <strong>{{ usuario.perfil.nome|default:usuario.username }}</strong><br>
@@ -55,7 +60,7 @@
                                 data-funcao="{{ usuario.perfil.funcao }}">
                                 <i class="fa-solid fa-pen"></i>
                             </button>
-                            <form method="POST" action="{% url 'excluir_usuario' usuario.id %}" style="display:inline;" onsubmit="confirmarSubmit(event, 'Desativar Conta', 'Tem certeza que deseja remover o acesso deste funcionário?', 'warning');">
+                            <form method="POST" action="{% url 'excluir_usuario' usuario.id %}" class="form-inline" onsubmit="confirmarSubmit(event, 'Desativar Conta', 'Tem certeza que deseja remover o acesso deste funcionário?', 'warning');">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-sm btn-outline-danger btn-excluir" title="Desativar"><i class="fa-solid fa-trash"></i></button>
                             </form>
@@ -85,15 +90,15 @@
                         
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label fw-bold text-danger">Função (Permissões)</label>
+                                <label for="modal-funcao" class="form-label fw-bold text-danger">Função (Permissões)</label>
                                 <select id="modal-funcao" name="funcao" class="form-select border-danger" required>
                                     <option value="administrador">Administrador (Acesso Total)</option>
                                     <option value="bibliotecario">Bibliotecário (Circulação)</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">Nova Senha (Opcional)</label>
-                                <input type="password" name="password" class="form-control" placeholder="Deixe em branco para não alterar">
+                                <label for="modal-password" class="form-label fw-bold">Nova Senha (Opcional)</label>
+                                <input type="password" id="modal-password" name="password" class="form-control" placeholder="Deixe em branco para não alterar">
                             </div>
                             
                             <div class="col-12 mt-4 mb-2 border-bottom"><h6 class="fw-bold text-secondary">Dados Pessoais</h6></div>

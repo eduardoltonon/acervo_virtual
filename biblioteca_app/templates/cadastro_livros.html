@@ -19,16 +19,16 @@
             <form method="post" action="{% url 'cadastro_livros' %}" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="row g-4">
-                    <div class="col-md-6"><label class="form-label fw-bold">Título</label><input type="text" name="titulo" class="form-control" required></div>
-                    <div class="col-md-6"><label class="form-label fw-bold">Autor</label><input type="text" name="autor" class="form-control" required></div>
-                    <div class="col-md-4"><label class="form-label fw-bold">Editora</label><input type="text" name="editora" class="form-control"></div>
-                    <div class="col-md-4"><label class="form-label fw-bold">Edição</label><input type="text" name="edicao" class="form-control" required></div>
-                    <div class="col-md-4"><label class="form-label fw-bold">Ano de Publicação</label><input type="date" name="data_publicacao" class="form-control"></div>
-                    <div class="col-md-3"><label class="form-label fw-bold">Páginas</label><input type="number" name="numero_paginas" class="form-control" required></div>
+                    <div class="col-md-6"><label for="id_titulo" class="form-label fw-bold">Título</label><input type="text" id="id_titulo" name="titulo" class="form-control" required></div>
+                    <div class="col-md-6"><label for="id_autor" class="form-label fw-bold">Autor</label><input type="text" id="id_autor" name="autor" class="form-control" required></div>
+                    <div class="col-md-4"><label for="id_editora" class="form-label fw-bold">Editora</label><input type="text" id="id_editora" name="editora" class="form-control"></div>
+                    <div class="col-md-4"><label for="id_edicao" class="form-label fw-bold">Edição</label><input type="text" id="id_edicao" name="edicao" class="form-control" required></div>
+                    <div class="col-md-4"><label for="id_data_publicacao" class="form-label fw-bold">Ano de Publicação</label><input type="date" id="id_data_publicacao" name="data_publicacao" class="form-control"></div>
+                    <div class="col-md-3"><label for="id_numero_paginas" class="form-label fw-bold">Páginas</label><input type="number" id="id_numero_paginas" name="numero_paginas" class="form-control" required></div>
                     <div class="col-md-3">
-                        <label class="form-label fw-bold">Gênero</label>
+                        <label for="genero-select" class="form-label fw-bold">Gênero</label>
                         <div class="input-group">
-                            <select name="genero" id="genero-select" class="form-select" required>
+                            <select name="genero" id="genero-select" class="form-select" required aria-label="Gênero">
                                 <option value="" selected disabled>Selecione...</option>
                                 {% for g in generos %}
                                 <option value="{{ g.nome }}">{{ g.nome }}</option>
@@ -37,23 +37,23 @@
                             <button type="button" class="btn btn-outline-primary" id="btn-add-genero" title="Adicionar Novo"><i class="fa-solid fa-plus"></i></button>
                         </div>
                     </div>
-                    <div class="col-md-3"><label class="form-label fw-bold">Idioma</label>
-                        <select name="idioma" class="form-select">
+                    <div class="col-md-3"><label for="id_idioma" class="form-label fw-bold">Idioma</label>
+                        <select name="idioma" id="id_idioma" class="form-select" aria-label="Idioma">
                             <option value="Português">Português</option>
                             <option value="Inglês">Inglês</option>
                             <option value="Espanhol">Espanhol</option>
                         </select>
                     </div>
-                    <div class="col-md-3"><label class="form-label fw-bold">Localização Física</label><input type="text" name="localizacao" class="form-control" placeholder="Ex: Prateleira B"></div>
-                    <div class="col-md-3"><label class="form-label fw-bold">Classificação</label><input type="number" name="classificacao" class="form-control" required></div>
-                    <div class="col-md-3"><label class="form-label fw-bold">Qtd. Exemplares</label>
-                        <select name="quantidade" class="form-select" required>
+                    <div class="col-md-3"><label for="id_localizacao" class="form-label fw-bold">Localização Física</label><input type="text" id="id_localizacao" name="localizacao" class="form-control" placeholder="Ex: Prateleira B"></div>
+                    <div class="col-md-3"><label for="id_classificacao" class="form-label fw-bold">Classificação</label><input type="number" id="id_classificacao" name="classificacao" class="form-control" required></div>
+                    <div class="col-md-3"><label for="id_quantidade" class="form-label fw-bold">Qtd. Exemplares</label>
+                        <select name="quantidade" id="id_quantidade" class="form-select" required aria-label="Quantidade">
                             {% for num in quantidades %}<option value="{{ num }}">{{ num }}</option>{% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-6"><label class="form-label fw-bold">Capa Principal</label><input type="file" name="capa" class="form-control" accept="image/*"></div>
-                    <div class="col-md-6"><label class="form-label fw-bold">Mais Fotos (Opcional)</label><input type="file" name="imagens_adicionais" class="form-control" multiple accept="image/*" title="Segure Ctrl para selecionar várias fotos"></div>
-                    <div class="col-12"><label class="form-label fw-bold">Sinopse</label><textarea name="sinopse" class="form-control" rows="4" required></textarea></div>
+                    <div class="col-md-6"><label for="id_capa" class="form-label fw-bold">Capa Principal</label><input type="file" id="id_capa" name="capa" class="form-control" accept="image/*"></div>
+                    <div class="col-md-6"><label for="id_imagens_adicionais" class="form-label fw-bold">Mais Fotos (Opcional)</label><input type="file" id="id_imagens_adicionais" name="imagens_adicionais" class="form-control" multiple accept="image/*" title="Segure Ctrl para selecionar várias fotos"></div>
+                    <div class="col-12"><label for="id_sinopse" class="form-label fw-bold">Sinopse</label><textarea id="id_sinopse" name="sinopse" class="form-control" rows="4" required></textarea></div>
                 </div>
                 <div class="mt-4 text-end">
                     <button type="submit" class="btn btn-primary px-5 py-2"><i class="fa-solid fa-save me-2"></i> Cadastrar Livro</button>

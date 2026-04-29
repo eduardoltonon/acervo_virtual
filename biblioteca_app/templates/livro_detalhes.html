@@ -9,6 +9,10 @@
     .zoom-icon { transition: all 0.2s ease; background-color: rgba(255,255,255,0.8); border-radius: 50%; padding: 10px; }
     .thumbnail-gallery img { opacity: 0.6; transition: 0.2s ease; border: 2px solid transparent; cursor: pointer; }
     .thumbnail-gallery img:hover, .thumbnail-gallery img.active { opacity: 1; border-color: var(--theme-primary); }
+    .capa-img-principal { max-height: 400px; object-fit: contain; }
+    .capa-placeholder-principal { height: 350px; width: 250px; }
+    .thumbnail-img { width: 60px; height: 80px; object-fit: cover; }
+    .sinopse-texto { line-height: 1.8; display: -webkit-box; -webkit-line-clamp: 4; line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 </style>
 <div class="container-fluid">
     <div class="card border-0 shadow-sm book-item"
@@ -31,20 +35,20 @@
                     <!-- Imagem Principal com Zoom -->
                     <div class="position-relative d-inline-block main-image-container mb-3" onclick="abrirLightbox()">
                         {% if livro.capa %}
-                        <img id="imagemPrincipal" src="{{ livro.capa.url }}" class="img-fluid rounded shadow" alt="Capa" style="max-height: 400px; object-fit: contain;">
+                        <img id="imagemPrincipal" src="{{ livro.capa.url }}" class="img-fluid rounded shadow capa-img-principal" alt="Capa do Livro">
                         <div class="position-absolute top-50 start-50 translate-middle zoom-icon opacity-0 shadow-sm"><i class="fa-solid fa-magnifying-glass-plus fa-2x text-dark"></i></div>
                         {% else %}
-                        <div id="imagemPrincipalPlaceholder" class="bg-light rounded d-flex align-items-center justify-content-center shadow mx-auto" style="height: 350px; width: 250px;"><i class="fa-solid fa-image text-muted fa-4x"></i></div>
+                        <div id="imagemPrincipalPlaceholder" class="bg-light rounded d-flex align-items-center justify-content-center shadow mx-auto capa-placeholder-principal"><i class="fa-solid fa-image text-muted fa-4x"></i></div>
                         {% endif %}
                     </div>
                     
                     <!-- Galeria de Miniaturas (Thumbnails) -->
                     <div class="d-flex justify-content-center gap-2 flex-wrap thumbnail-gallery">
                         {% if livro.capa %}
-                        <img src="{{ livro.capa.url }}" class="rounded shadow-sm active" style="width: 60px; height: 80px; object-fit: cover;" onclick="trocarImagem(this.src, this)">
+                        <img src="{{ livro.capa.url }}" alt="Miniatura da Capa" class="rounded shadow-sm active thumbnail-img" onclick="trocarImagem(this.src, this)">
                         {% endif %}
                         {% for img in livro.imagens_adicionais.all %}
-                        <img src="{{ img.imagem.url }}" class="rounded shadow-sm" style="width: 60px; height: 80px; object-fit: cover;" onclick="trocarImagem(this.src, this)">
+                        <img src="{{ img.imagem.url }}" alt="Miniatura Adicional" class="rounded shadow-sm thumbnail-img" onclick="trocarImagem(this.src, this)">
                         {% endfor %}
                     </div>
                     <div class="mt-4">
@@ -68,7 +72,7 @@
                     </div>
                     <h5 class="fw-bold mt-4">Sinopse da Obra</h5>
                     <div class="sinopse-container">
-                        <p class="text-secondary fs-6 mb-1" id="sinopse-text" style="line-height: 1.8; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;">{{ livro.sinopse }}</p>
+                        <p class="text-secondary fs-6 mb-1 sinopse-texto" id="sinopse-text">{{ livro.sinopse }}</p>
                         <button class="btn btn-link p-0 text-decoration-none fw-bold mb-3 link-tema" id="btn-ler-mais" onclick="toggleSinopse()">Ler mais <i class="fa-solid fa-chevron-down ms-1"></i></button>
                     </div>
                     {% if not disponivel and data_devolucao_proxima %}
@@ -179,7 +183,7 @@
         <button type="button" class="btn-close btn-close-white ms-auto bg-light" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body text-center pt-0">
-        <img id="lightboxImage" src="" class="img-fluid rounded shadow-lg" style="max-height: 85vh; object-fit: contain;">
+        <img id="lightboxImage" src="" alt="Imagem Ampliada" class="img-fluid rounded shadow-lg" style="max-height: 85vh; object-fit: contain;">
       </div>
     </div>
   </div>

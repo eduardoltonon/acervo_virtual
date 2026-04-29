@@ -3,6 +3,10 @@
 {% block title %}Circulação: Devolução e Renovação | Acervo Virtual{% endblock %}
 
 {% block content %}
+<style>
+    .modal-background { background-color: rgba(0,0,0,0.5); }
+</style>
+
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -36,7 +40,7 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th style="width: 40px;"><input type="checkbox" id="select-all"></th>
+                        <th style="width: 40px;"><input type="checkbox" id="select-all" aria-label="Selecionar todos os empréstimos"></th>
                         <th>Título do Livro</th>
                         <th>Leitor</th>
                         <th>Data Devolução</th>
@@ -52,7 +56,7 @@
                         data-emprestimo-atrasado="{% if emprestimo.atrasado %}1{% else %}0{% endif %}" 
                         data-emprestimo-multa="{{ emprestimo.valor_multa }}">
                         
-                        <td><input type="checkbox" name="emprestimos_selecionados" value="{{ emprestimo.id }}" class="row-checkbox" data-atrasado="{{ emprestimo.atrasado|lower }}"></td>
+                        <td><input type="checkbox" name="emprestimos_selecionados" value="{{ emprestimo.id }}" class="row-checkbox" data-atrasado="{{ emprestimo.atrasado|lower }}" aria-label="Selecionar empréstimo"></td>
                         <td class="text-start ps-3">
                             <strong>{{ emprestimo.exemplar.livro.titulo }}</strong><br>
                             <small class="badge bg-light text-dark border">ID: {{ emprestimo.exemplar.codigo_tombo }}</small>
@@ -81,12 +85,12 @@
     </div>
 
     <!-- Modal Devolução -->
-    <div id="modal-devolucao" class="modal" style="background-color: rgba(0,0,0,0.5);">
+    <div id="modal-devolucao" class="modal modal-background">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
                 <div class="modal-header bg-light">
                     <h5 class="modal-title fw-bold">Confirmar Devolução</h5>
-                    <button type="button" class="btn-close fechar-modal"></button>
+                    <button type="button" class="btn-close fechar-modal" aria-label="Fechar modal"></button>
                 </div>
                 <form id="form-devolucao" method="post" action="{% url 'devolver_livro' 0 %}">
                     <div class="modal-body">
@@ -97,7 +101,7 @@
                         <p class="mb-3"><strong>Devolução Prevista:</strong> <span id="data-devolucao-prevista"></span></p>
                         <hr>
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Data de Entrega Real</label>
+                            <label for="data-entrega" class="form-label fw-bold">Data de Entrega Real</label>
                             <input type="date" id="data-entrega" name="data_entrega" class="form-control" required>
                         </div>
                         <div class="alert alert-secondary d-flex justify-content-between align-items-center mb-0">

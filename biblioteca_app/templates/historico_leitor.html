@@ -3,6 +3,11 @@
 {% block title %}Detalhes do Leitor | Acervo Virtual{% endblock %}
 
 {% block content %}
+<style>
+    .avatar-img-perfil { height: 150px; width: 150px; object-fit: cover; }
+    .avatar-placeholder-perfil { height: 150px; width: 150px; }
+</style>
+
 <div class="container-fluid">
     <div class="card border-0 shadow-sm leitor-item"
          data-leitor-id="{{ leitor.id }}"
@@ -19,9 +24,9 @@
             <div class="row">
                 <div class="col-md-3 text-center border-end">
                     {% if leitor.foto %}
-                        <img src="{{ leitor.foto.url }}" class="rounded-circle shadow-sm mx-auto mb-3" style="height: 150px; width: 150px; object-fit: cover;" alt="Foto de {{ leitor.nome }}">
+                        <img src="{{ leitor.foto.url }}" class="rounded-circle shadow-sm mx-auto mb-3 avatar-img-perfil" alt="Foto de {{ leitor.nome }}">
                     {% else %}
-                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center shadow-sm mx-auto mb-3" style="height: 150px; width: 150px;">
+                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center shadow-sm mx-auto mb-3 avatar-placeholder-perfil">
                             <i class="fa-solid fa-user fa-4x text-primary"></i>
                         </div>
                     {% endif %}

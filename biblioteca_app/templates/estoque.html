@@ -11,6 +11,16 @@
         box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; /* Aumenta a sombra */
         transform: translateY(-2px); /* Dá a leve sensação de "pular" para o clique */
     }
+    .form-select-sm-custom { max-width: 180px; }
+    .cursor-pointer { cursor: pointer; }
+    .form-inline { display: inline; }
+    .capa-img-list { max-height: 140px; object-fit: contain; }
+    .capa-placeholder-list { height: 140px; width: 100px; }
+    .capa-img-grid { height: 250px; object-fit: cover; }
+    .capa-placeholder-grid { height: 220px; }
+    .sinopse-texto { 
+        display: -webkit-box; -webkit-line-clamp: 5; line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; 
+    }
 </style>
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -24,7 +34,7 @@
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
             <form action="{% url 'estoque' %}" method="GET" class="d-flex w-100 mb-0 gap-2">
-                <select name="filtro" class="form-select form-select-sm" style="max-width: 180px;">
+                <select name="filtro" aria-label="Filtro de busca" class="form-select form-select-sm form-select-sm-custom">
                     <option value="livre" {% if filtro == 'livre' or not filtro %}selected{% endif %}>Termo Livre</option>
                     <option value="titulo" {% if filtro == 'titulo' %}selected{% endif %}>Título</option>
                     <option value="autor" {% if filtro == 'autor' %}selected{% endif %}>Autor</option>
@@ -65,7 +75,7 @@
                 </thead>
                 <tbody>
                     {% for livro in livros %}
-                    <tr class="book-item" style="cursor: pointer;" onclick="window.location.href='{% url 'livro_detalhes' livro.id %}'" data-livro-id="{{ livro.id }}" data-livro-titulo="{{ livro.titulo }}" data-autor="{{ livro.autor }}"
+                    <tr class="book-item cursor-pointer" onclick="window.location.href='{% url 'livro_detalhes' livro.id %}';" data-livro-id="{{ livro.id }}" data-livro-titulo="{{ livro.titulo }}" data-autor="{{ livro.autor }}"
                         data-genero="{{ livro.genero }}" data-edicao="{{ livro.edicao }}"
                         data-numero-paginas="{{ livro.numero_paginas }}" data-classificacao="{{ livro.classificacao }}"
                         data-sinopse="{{ livro.sinopse }}" data-quantidade="{{ livro.total_exemplares }}"
@@ -80,7 +90,7 @@
                         <td onclick="event.stopPropagation();">
                             {% if request.session.funcao == 'administrador' or request.user.is_superuser %}
                             <button type="button" class="btn btn-sm btn-outline-secondary btn-editar" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                            <form method="POST" action="{% url 'excluir_livro' livro.id %}" style="display:inline;" onsubmit="confirmarSubmit(event, 'Excluir Livro', 'Tem certeza que deseja excluir permanentemente o livro \'{{ livro.titulo|escapejs }}\'?', 'error');">
+                            <form method="POST" action="{% url 'excluir_livro' livro.id %}" class="form-inline" onsubmit="confirmarSubmit(event, 'Excluir Livro', 'Tem certeza que deseja excluir permanentemente o livro \'{{ livro.titulo|escapejs }}\'?', 'error');">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-sm btn-outline-danger btn-excluir" title="Excluir"><i class="fa-solid fa-trash"></i></button>
                             </form>
@@ -101,20 +111,20 @@
     <div id="view-list" class="view-section d-none">
         <div class="d-flex flex-column gap-3">
             {% for livro in livros %}
-            <div class="card border-0 shadow-sm book-item" style="cursor: pointer;" onclick="window.location.href='{% url 'livro_detalhes' livro.id %}'" data-livro-id="{{ livro.id }}" data-livro-titulo="{{ livro.titulo }}" data-autor="{{ livro.autor }}" data-genero="{{ livro.genero }}" data-edicao="{{ livro.edicao }}" data-numero-paginas="{{ livro.numero_paginas }}" data-classificacao="{{ livro.classificacao }}" data-sinopse="{{ livro.sinopse }}" data-quantidade="{{ livro.total_exemplares }}" data-idioma="{{ livro.idioma }}" data-editora="{{ livro.editora.nome|default:'' }}" data-data-publicacao="{{ livro.data_publicacao|date:'Y-m-d'|default:'' }}" data-capa="{% if livro.capa %}{{ livro.capa.url }}{% endif %}">
+            <div class="card border-0 shadow-sm book-item cursor-pointer" onclick="window.location.href='{% url 'livro_detalhes' livro.id %}';" data-livro-id="{{ livro.id }}" data-livro-titulo="{{ livro.titulo }}" data-autor="{{ livro.autor }}" data-genero="{{ livro.genero }}" data-edicao="{{ livro.edicao }}" data-numero-paginas="{{ livro.numero_paginas }}" data-classificacao="{{ livro.classificacao }}" data-sinopse="{{ livro.sinopse }}" data-quantidade="{{ livro.total_exemplares }}" data-idioma="{{ livro.idioma }}" data-editora="{{ livro.editora.nome|default:'' }}" data-data-publicacao="{{ livro.data_publicacao|date:'Y-m-d'|default:'' }}" data-capa="{% if livro.capa %}{{ livro.capa.url }}{% endif %}">
                 <div class="row g-0 align-items-center">
                     <div class="col-md-2 text-center p-3">
                         {% if livro.capa %}
-                            <img src="{{ livro.capa.url }}" class="img-fluid rounded shadow-sm" style="max-height: 140px; object-fit: contain;">
+                            <img src="{{ livro.capa.url }}" alt="Capa do Livro" class="img-fluid rounded shadow-sm capa-img-list">
                         {% else %}
-                            <div class="bg-light rounded d-flex align-items-center justify-content-center shadow-sm mx-auto" style="height: 140px; width: 100px;"><i class="fa-solid fa-book fa-3x text-muted"></i></div>
+                            <div class="bg-light rounded d-flex align-items-center justify-content-center shadow-sm mx-auto capa-placeholder-list"><i class="fa-solid fa-book fa-3x text-muted"></i></div>
                         {% endif %}
                     </div>
                     <div class="col p-3">
                         <h4 class="fw-bold text-dark mb-1">{{ livro.titulo }}</h4>
                         <h6 class="text-primary mb-3">{{ livro.autor }}</h6>
                         <div class="d-none d-md-block mb-2">
-                            <p class="text-muted small mb-1" style="display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;">{{ livro.sinopse }}</p>
+                            <p class="text-muted small mb-1 sinopse-texto">{{ livro.sinopse }}</p>
                             <button type="button" class="btn btn-link p-0 text-decoration-none fw-bold small text-primary" onclick="toggleSinopseList(this); event.stopPropagation();">Ler mais <i class="fa-solid fa-chevron-down ms-1"></i></button>
                         </div>
                         <div class="d-flex gap-2 mt-2">
@@ -145,12 +155,12 @@
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4">
             {% for livro in livros %}
             <div class="col">
-                <div class="card h-100 border-0 shadow-sm book-item" style="cursor: pointer;" onclick="window.location.href='{% url 'livro_detalhes' livro.id %}'" data-livro-id="{{ livro.id }}" data-livro-titulo="{{ livro.titulo }}" data-autor="{{ livro.autor }}" data-genero="{{ livro.genero }}" data-edicao="{{ livro.edicao }}" data-numero-paginas="{{ livro.numero_paginas }}" data-classificacao="{{ livro.classificacao }}" data-sinopse="{{ livro.sinopse }}" data-quantidade="{{ livro.total_exemplares }}" data-idioma="{{ livro.idioma }}" data-editora="{{ livro.editora.nome|default:'' }}" data-data-publicacao="{{ livro.data_publicacao|date:'Y-m-d'|default:'' }}" data-capa="{% if livro.capa %}{{ livro.capa.url }}{% endif %}">
+                <div class="card h-100 border-0 shadow-sm book-item cursor-pointer" onclick="window.location.href='{% url 'livro_detalhes' livro.id %}';" data-livro-id="{{ livro.id }}" data-livro-titulo="{{ livro.titulo }}" data-autor="{{ livro.autor }}" data-genero="{{ livro.genero }}" data-edicao="{{ livro.edicao }}" data-numero-paginas="{{ livro.numero_paginas }}" data-classificacao="{{ livro.classificacao }}" data-sinopse="{{ livro.sinopse }}" data-quantidade="{{ livro.total_exemplares }}" data-idioma="{{ livro.idioma }}" data-editora="{{ livro.editora.nome|default:'' }}" data-data-publicacao="{{ livro.data_publicacao|date:'Y-m-d'|default:'' }}" data-capa="{% if livro.capa %}{{ livro.capa.url }}{% endif %}">
                     <div class="position-relative">
                         {% if livro.capa %}
-                            <img src="{{ livro.capa.url }}" class="card-img-top p-3 rounded-4" style="height: 250px; object-fit: cover;">
+                            <img src="{{ livro.capa.url }}" alt="Capa do Livro" class="card-img-top p-3 rounded-4 capa-img-grid">
                         {% else %}
-                            <div class="bg-light rounded-4 d-flex align-items-center justify-content-center m-3 shadow-sm" style="height: 220px;"><i class="fa-solid fa-image fa-4x text-muted"></i></div>
+                            <div class="bg-light rounded-4 d-flex align-items-center justify-content-center m-3 shadow-sm capa-placeholder-grid"><i class="fa-solid fa-image fa-4x text-muted"></i></div>
                         {% endif %}
                         <span class="position-absolute top-0 end-0 m-3 badge {% if livro.disponiveis > 0 %}bg-success{% else %}bg-danger{% endif %} shadow">{{ livro.disponiveis }} disp.</span>
                     </div>
@@ -219,13 +229,13 @@
                         {% csrf_token %}
                         <input type="hidden" id="livro-id-edicao" name="livro_id">
                         <div class="row g-3">
-                            <div class="col-md-6"><label class="form-label">Título</label><input type="text" id="titulo-edicao" name="titulo" class="form-control"></div>
-                            <div class="col-md-6"><label class="form-label">Autor</label><input type="text" id="autor-edicao" name="autor_nome" class="form-control"></div>
+                            <div class="col-md-6"><label for="titulo-edicao" class="form-label">Título</label><input type="text" id="titulo-edicao" name="titulo" class="form-control"></div>
+                            <div class="col-md-6"><label for="autor-edicao" class="form-label">Autor</label><input type="text" id="autor-edicao" name="autor_nome" class="form-control"></div>
                         
-                        <div class="col-md-4"><label class="form-label">Gênero</label><input type="text" id="genero-edicao" name="genero_nome" class="form-control"></div>
-                        <div class="col-md-4"><label class="form-label">Editora</label><input type="text" id="editora-edicao" name="editora_nome" class="form-control"></div>
+                        <div class="col-md-4"><label for="genero-edicao" class="form-label">Gênero</label><input type="text" id="genero-edicao" name="genero_nome" class="form-control"></div>
+                        <div class="col-md-4"><label for="editora-edicao" class="form-label">Editora</label><input type="text" id="editora-edicao" name="editora_nome" class="form-control"></div>
                         <div class="col-md-4">
-                            <label class="form-label">Idioma</label>
+                            <label for="idioma-edicao" class="form-label">Idioma</label>
                             <select id="idioma-edicao" name="idioma" class="form-select">
                                 <option value="Português">Português</option>
                                 <option value="Inglês">Inglês</option>
@@ -233,17 +243,17 @@
                             </select>
                         </div>
                         
-                        <div class="col-md-3"><label class="form-label">Classificação</label><input type="number" id="classificacao-edicao" name="classificacao" class="form-control"></div>
-                        <div class="col-md-3"><label class="form-label">Edição</label><input type="text" id="edicao-edicao" name="edicao" class="form-control"></div>
-                        <div class="col-md-3"><label class="form-label">Páginas</label><input type="number" id="numero_paginas-edicao" name="numero_paginas" class="form-control"></div>
-                        <div class="col-md-3"><label class="form-label">Data Pub.</label><input type="date" id="data_publicacao-edicao" name="data_publicacao" class="form-control"></div>
+                        <div class="col-md-3"><label for="classificacao-edicao" class="form-label">Classificação</label><input type="number" id="classificacao-edicao" name="classificacao" class="form-control"></div>
+                        <div class="col-md-3"><label for="edicao-edicao" class="form-label">Edição</label><input type="text" id="edicao-edicao" name="edicao" class="form-control"></div>
+                        <div class="col-md-3"><label for="numero_paginas-edicao" class="form-label">Páginas</label><input type="number" id="numero_paginas-edicao" name="numero_paginas" class="form-control"></div>
+                        <div class="col-md-3"><label for="data_publicacao-edicao" class="form-label">Data Pub.</label><input type="date" id="data_publicacao-edicao" name="data_publicacao" class="form-control"></div>
                         
-                            <div class="col-12"><label class="form-label">Sinopse</label><textarea id="sinopse-edicao" name="sinopse" class="form-control" rows="3"></textarea></div>
+                            <div class="col-12"><label for="sinopse-edicao" class="form-label">Sinopse</label><textarea id="sinopse-edicao" name="sinopse" class="form-control" rows="3"></textarea></div>
                             <div class="col-md-6">
                                 <label class="form-label d-block">Capa atual</label>
                                 <img id="capa-preview" src="" alt="Capa atual" class="img-thumbnail shadow-sm" style="max-height: 120px;">
                             </div>
-                            <div class="col-md-6"><label class="form-label">Nova Capa (opcional)</label><input type="file" id="capa-nova-edicao" name="capa_nova" class="form-control"></div>
+                            <div class="col-md-6"><label for="capa-nova-edicao" class="form-label">Nova Capa (opcional)</label><input type="file" id="capa-nova-edicao" name="capa_nova" class="form-control"></div>
                         </div>
                     </div>
                     <div class="modal-footer">

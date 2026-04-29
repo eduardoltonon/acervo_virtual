@@ -21,8 +21,8 @@
                         {% csrf_token %}
                         <input type="hidden" name="form-action" value="salvar-multa">
                         <div class="mb-4">
-                            <label class="form-label text-muted">Valor de multa cobrado por cada dia de atraso (R$):</label>
-                            <input type="number" name="multa-por-dia" step="0.01" value="{{ multa_por_dia }}" class="form-control form-control-lg fw-bold text-primary" required>
+                            <label for="multa-por-dia" class="form-label text-muted">Valor de multa cobrado por cada dia de atraso (R$):</label>
+                            <input type="number" id="multa-por-dia" name="multa-por-dia" step="0.01" value="{{ multa_por_dia }}" class="form-control form-control-lg fw-bold text-primary" required>
                         </div>
                         <div class="text-end">
                             <button type="submit" class="btn btn-primary w-100 py-2"><i class="fa-solid fa-save me-2"></i> Aplicar Nova Regra</button>
@@ -42,8 +42,8 @@
                         {% csrf_token %}
                         <input type="hidden" name="form-action" value="salvar-renovacao">
                         <div class="mb-4">
-                            <label class="form-label text-muted">Dias adicionados à devolução em cada renovação:</label>
-                            <input type="number" name="dias-renovacao" min="1" max="90" value="{{ dias_renovacao }}" class="form-control form-control-lg fw-bold text-primary" required>
+                            <label for="dias-renovacao" class="form-label text-muted">Dias adicionados à devolução em cada renovação:</label>
+                            <input type="number" id="dias-renovacao" name="dias-renovacao" min="1" max="90" value="{{ dias_renovacao }}" class="form-control form-control-lg fw-bold text-primary" required>
                         </div>
                         <div class="text-end">
                             <button type="submit" class="btn btn-primary w-100 py-2"><i class="fa-solid fa-save me-2"></i> Atualizar Dias</button>

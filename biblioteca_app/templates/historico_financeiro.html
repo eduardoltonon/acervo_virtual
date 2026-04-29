@@ -31,19 +31,19 @@
         <div class="card-body">
             <form action="{% url 'historico_financeiro' %}" method="GET" class="row g-3 align-items-end">
                 <div class="col-md-5">
-                    <label class="form-label small fw-bold text-muted mb-1">Pesquisar Aluno ou Funcionário</label>
-                    <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Ex: João, Admin...">
+                    <label for="id_q" class="form-label small fw-bold text-muted mb-1">Pesquisar Aluno ou Funcionário</label>
+                    <input type="text" id="id_q" name="q" value="{{ query }}" class="form-control" placeholder="Ex: João, Admin...">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small fw-bold text-muted mb-1">Data Inicial</label>
-                    <input type="date" name="data_inicio" value="{{ data_inicio }}" class="form-control">
+                    <label for="id_data_inicio" class="form-label small fw-bold text-muted mb-1">Data Inicial</label>
+                    <input type="date" id="id_data_inicio" name="data_inicio" value="{{ data_inicio }}" class="form-control">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small fw-bold text-muted mb-1">Data Final</label>
-                    <input type="date" name="data_fim" value="{{ data_fim }}" class="form-control">
+                    <label for="id_data_fim" class="form-label small fw-bold text-muted mb-1">Data Final</label>
+                    <input type="date" id="id_data_fim" name="data_fim" value="{{ data_fim }}" class="form-control">
                 </div>
                 <div class="col-md-1 d-grid">
-                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i></button>
+                    <button type="submit" class="btn btn-primary" aria-label="Filtrar Relatório"><i class="fa-solid fa-filter"></i></button>
                 </div>
             </form>
         </div>

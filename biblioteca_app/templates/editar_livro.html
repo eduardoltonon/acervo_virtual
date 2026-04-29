@@ -4,6 +4,10 @@
 {% block title %}Editar Livro - Acervo Virtual{% endblock %}
 
 {% block content %}
+<style>
+    .capa-img-preview { max-height: 200px; }
+</style>
+
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold text-dark"><i class="fa-solid fa-pen-to-square text-primary me-2"></i>Editar: {{ livro.titulo }}</h2>
@@ -18,7 +22,7 @@
             {% if livro.capa %}
             <div class="mb-4 text-center">
                 <p class="text-muted small mb-2">Capa Atual</p>
-                <img src="{{ livro.capa.url }}" alt="Capa do Livro" class="img-thumbnail shadow-sm" style="max-height: 200px;">
+                <img src="{{ livro.capa.url }}" alt="Capa do Livro" class="img-thumbnail shadow-sm capa-img-preview">
             </div>
             {% endif %}
 
