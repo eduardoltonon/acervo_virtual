@@ -254,6 +254,8 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById("endereco-edicao").value = container.dataset.endereco || '';
             document.getElementById("complemento-edicao").value = container.dataset.complemento || '';
             document.getElementById("cidade-edicao").value = container.dataset.cidade || '';
+            document.getElementById("recebimento_alertas-edicao").value = container.dataset.alertas || 'email';
+            document.getElementById("ativo-edicao").checked = container.dataset.ativo === 'true';
 
             const form = document.getElementById("form-edicao-leitor");
             if (form) form.action = `/leitores/editar/${container.dataset.leitorId}/`;

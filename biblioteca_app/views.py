@@ -16,7 +16,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LogoutView
 from .decorators import admin_required
 from . import services
-from .forms import LeitorForm, LivroCadastroForm
+from .forms import LeitorForm, LivroCadastroForm, LeitorEditForm, LivroEditForm
 
 # --- Funções Auxiliares (Regras de Negócio Extraídas) ---
 def _validar_cpf(cpf):
@@ -235,46 +235,22 @@ def cadastro_livros(request):
 @admin_required
 def editar_livro(request, livro_id):
     livro = get_object_or_404(Livro, pk=livro_id)
+    
     if request.method == 'POST':
-        livro.titulo = request.POST.get('titulo-edicao', livro.titulo)
-        livro.edicao = request.POST.get('edicao-edicao', livro.edicao)
-        livro.numero_paginas = request.POST.get('numero_paginas-edicao', livro.numero_paginas)
-        
-        idioma = request.POST.get('idioma-edicao')
-        if idioma:
-            livro.idioma = idioma
-            
-        data_pub = request.POST.get('data_publicacao-edicao')
-        livro.data_publicacao = data_pub if data_pub else None
-            
-        classificacao = request.POST.get('classificacao-edicao')
-        if classificacao:
-            livro.classificacao = classificacao
-            
-        sinopse = request.POST.get('sinopse-edicao')
-        if sinopse:
-            livro.sinopse = sinopse
-        
-        autor_nome = request.POST.get('autor-edicao', '').strip()
-        if autor_nome:
-            livro.autor, _ = Autor.objects.get_or_create(nome=autor_nome)
-
-        genero_nome = request.POST.get('genero-edicao', '').strip()
-        if genero_nome:
-            livro.genero, _ = Genero.objects.get_or_create(nome=genero_nome)
-
-        editora_nome = request.POST.get('editora-edicao', '').strip()
-        if editora_nome:
-            livro.editora, _ = Editora.objects.get_or_create(nome=editora_nome)
+        form = LivroEditForm(request.POST, request.FILES, instance=livro)
+        if form.is_valid():
+            try:
+                form.save()
+                messages.success(request, f'O livro "{livro.titulo}" foi atualizado.')
+            except Exception as e:
+                messages.error(request, f'Erro ao atualizar livro: {str(e)}', extra_tags="erro")
         else:
-            livro.editora = None
-
-        if 'capa-nova-edicao' in request.FILES:
-            livro.capa = request.FILES['capa-nova-edicao']
-            
-        livro.save()
-        messages.success(request, f'O livro "{livro.titulo}" foi atualizado.')
-        return redirect('estoque')
+            for field, errors in form.errors.items():
+                for error in errors:
+                    # Adiciona o nome do campo para melhor contexto, se disponível
+                    field_name = form.fields[field].label if field in form.fields else field
+                    messages.error(request, f'{field_name}: {error}', extra_tags="erro")
+        return redirect('estoque') # Redireciona mesmo em caso de erro, mantendo o comportamento original
     
     return redirect('estoque')
 
@@ -353,26 +329,24 @@ def cadastro_leitor(request):
 @admin_required
 def editar_leitor(request, leitor_id):
     leitor = get_object_or_404(Leitor, pk=leitor_id)
-    if request.method == 'POST':
-        novo_id = request.POST.get('id_leitor-edicao')
-        if novo_id and novo_id != leitor.id_leitor:
-            if Leitor.objects.filter(id_leitor=novo_id).exists():
-                messages.error(request, 'Este ID de Leitor já está em uso.')
-                return redirect(request.META.get('HTTP_REFERER', 'leitores'))
-            leitor.id_leitor = novo_id
-
-        leitor.nome = request.POST.get('nome-edicao')
-        leitor.celular = request.POST.get('celular-edicao')
-        leitor.email = request.POST.get('email-edicao')
-        leitor.cep = request.POST.get('cep-edicao')
-        leitor.endereco = request.POST.get('endereco-edicao')
-        leitor.complemento = request.POST.get('complemento-edicao')
-        leitor.cidade = request.POST.get('cidade-edicao')
-        leitor.save()
-        messages.success(request, f'Dados de "{leitor.nome}" atualizados.')
-        return redirect(request.META.get('HTTP_REFERER', 'leitores'))
     
-    return redirect('leitores')
+    if request.method == 'POST':
+        form = LeitorEditForm(request.POST, instance=leitor)
+        if form.is_valid():
+            try:
+                form.save()
+                messages.success(request, f'Dados de "{leitor.nome}" atualizados.')
+            except IntegrityError:
+                messages.error(request, 'Erro de integridade no banco de dados (Ex: ID ou Email duplicado).', extra_tags="erro")
+            except Exception as e:
+                messages.error(request, f'Erro ao atualizar leitor: {str(e)}', extra_tags="erro")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    field_name = form.fields[field].label if field in form.fields else field
+                    messages.error(request, f'{field_name}: {error}', extra_tags="erro")
+        return redirect(request.META.get('HTTP_REFERER', 'leitores')) # Redireciona mesmo em caso de erro
+    return redirect('leitores') # Se não for POST, apenas redireciona
 
 @admin_required
 @require_POST 

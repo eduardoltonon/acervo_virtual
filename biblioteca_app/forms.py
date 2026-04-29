@@ -1,7 +1,7 @@
 import base64
 from django import forms
 from django.core.files.base import ContentFile
-from .models import Leitor
+from .models import Leitor, Livro, Autor, Genero, Editora
 from . import services
 
 class LeitorForm(forms.ModelForm):
@@ -67,6 +67,76 @@ class LeitorForm(forms.ModelForm):
         if commit:
             leitor.save()
         return leitor
+
+class LeitorEditForm(forms.ModelForm):
+    class Meta:
+        model = Leitor
+        fields = [
+            'id_leitor', 'nome', 'celular', 'email', 'cep', 'endereco',
+            'complemento', 'cidade', 'recebimento_alertas', 'ativo'
+        ]
+        # Excluímos 'cpf' e 'data_nascimento' pois geralmente não são editados
+        # após o cadastro. Se precisar editá-los, adicione-os aqui e no template.
+        # Excluímos 'foto' pois a view de edição atual não lida com upload de foto.
+
+    def clean_id_leitor(self):
+        id_leitor = self.cleaned_data.get('id_leitor')
+        if Leitor.objects.filter(id_leitor=id_leitor).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError('Este ID de Leitor já está em uso por outro leitor.')
+        return id_leitor
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if Leitor.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError('Este endereço de e-mail já está em uso por outro leitor.')
+        return email
+
+class LivroEditForm(forms.ModelForm):
+    # Campos para Autor, Gênero e Editora que virão como strings do formulário
+    autor_nome = forms.CharField(max_length=200, required=True, label="Autor")
+    genero_nome = forms.CharField(max_length=100, required=True, label="Gênero")
+    editora_nome = forms.CharField(max_length=200, required=False, label="Editora")
+    
+    # Campo para nova capa (opcional)
+    capa_nova = forms.ImageField(required=False, label="Nova Capa")
+
+    class Meta:
+        model = Livro
+        fields = [
+            'titulo', 'edicao', 'numero_paginas', 'classificacao', 'sinopse',
+            'idioma', 'data_publicacao', 'localizacao'
+        ]
+        # 'autor', 'genero', 'editora', 'capa' são excluídos daqui pois são tratados pelos campos customizados acima.
+        widgets = {
+            'sinopse': forms.Textarea(attrs={'rows': 3}),
+            'data_publicacao': forms.DateInput(attrs={'type': 'date'}),
+        }
+        error_messages = {
+            'titulo': {'required': 'O título é obrigatório.'},
+            'edicao': {'required': 'A edição é obrigatória.'},
+            'numero_paginas': {'required': 'O número de páginas é obrigatório.', 'invalid': 'Digite um número válido de páginas.'},
+            'classificacao': {'required': 'A classificação é obrigatória.', 'invalid': 'Digite uma classificação válida.'},
+            'sinopse': {'required': 'A sinopse é obrigatória.'},
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance: # Preenche os campos de texto com os valores atuais do livro
+            self.fields['autor_nome'].initial = self.instance.autor.nome
+            self.fields['genero_nome'].initial = self.instance.genero.nome
+            if self.instance.editora:
+                self.fields['editora_nome'].initial = self.instance.editora.nome
+
+    def save(self, commit=True):
+        livro = super().save(commit=False)
+        livro.autor, _ = Autor.objects.get_or_create(nome=self.cleaned_data['autor_nome'].strip())
+        livro.genero, _ = Genero.objects.get_or_create(nome=self.cleaned_data['genero_nome'].strip())
+        livro.editora, _ = Editora.objects.get_or_create(nome=self.cleaned_data['editora_nome'].strip()) if self.cleaned_data['editora_nome'] else (None, False)
+        if self.cleaned_data.get('capa_nova'):
+            livro.capa = self.cleaned_data['capa_nova']
+        if commit:
+            livro.save()
+        return livro
 
 class LivroCadastroForm(forms.Form):
     titulo = forms.CharField(max_length=200, error_messages={'required': 'O título é obrigatório.'})
