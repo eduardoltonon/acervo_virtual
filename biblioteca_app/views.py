@@ -6,7 +6,7 @@ from django.contrib import messages
 from .models import Livro, Exemplar, Leitor, Emprestimo, Devolucao, Configuracao, PerfilUsuario, Autor, Editora, Genero
 from django.utils import timezone
 from datetime import datetime, date
-import decimal, json, base64
+import decimal, json, base64, logging
 from django.core.files.base import ContentFile
 from django.views.decorators.http import require_POST 
 from django.contrib.auth.models import User
@@ -17,6 +17,8 @@ from django.contrib.auth.views import LogoutView
 from .decorators import admin_required
 from . import services
 from .forms import LeitorForm, LivroCadastroForm, LeitorEditForm, LivroEditForm
+
+logger = logging.getLogger(__name__)
 
 # --- Funções Auxiliares (Regras de Negócio Extraídas) ---
 def _validar_cpf(cpf):
@@ -504,7 +506,8 @@ def calcular_multa(request):
             'atraso': atraso
         })
     except Exception as e:
-        return JsonResponse({'erro': str(e)}, status=500)
+        logger.error(f"Erro na API calcular_multa: {e}", exc_info=True)
+        return JsonResponse({'erro': 'Ocorreu um erro interno ao calcular a multa.'}, status=500)
 
 def devolver_livro(request, emprestimo_id):
     if request.method == "POST":
@@ -636,8 +639,8 @@ def buscar_livro(request):
         else:
             return JsonResponse({'erro': 'Livro não encontrado'}, status=404)
     except Exception as e:
-        
-        return JsonResponse({'erro': str(e)}, status=500)
+        logger.error(f"Erro na API buscar_livro: {e}", exc_info=True)
+        return JsonResponse({'erro': 'Ocorreu um erro interno ao buscar o livro.'}, status=500)
 
 def buscar_leitor_por_id(request):
     leitor_id = request.GET.get('id')
@@ -658,7 +661,8 @@ def buscar_leitor_por_id(request):
     except Leitor.DoesNotExist:
         return JsonResponse({'erro': 'Leitor não encontrado'}, status=404)
     except Exception as e:
-        return JsonResponse({'erro': str(e)}, status=500)
+        logger.error(f"Erro na API buscar_leitor_por_id: {e}", exc_info=True)
+        return JsonResponse({'erro': 'Ocorreu um erro interno ao buscar o leitor.'}, status=500)
 
 def buscar_livro_por_id(request):
     livro_id = request.GET.get('id')
@@ -684,7 +688,8 @@ def buscar_livro_por_id(request):
     except Livro.DoesNotExist:
         return JsonResponse({'erro': 'Livro não encontrado'}, status=404)
     except Exception as e:
-        return JsonResponse({'erro': str(e)}, status=500)
+        logger.error(f"Erro na API buscar_livro_por_id: {e}", exc_info=True)
+        return JsonResponse({'erro': 'Ocorreu um erro interno ao buscar os detalhes do livro.'}, status=500)
 
 def buscar_livro_completo(request):
     titulo = request.GET.get('titulo')
@@ -716,7 +721,8 @@ def buscar_livro_completo(request):
         }
         return JsonResponse(response_data)
     except Exception as e:
-        return JsonResponse({'erro': str(e)}, status=500)
+        logger.error(f"Erro na API buscar_livro_completo: {e}", exc_info=True)
+        return JsonResponse({'erro': 'Ocorreu um erro interno ao buscar as informações do livro.'}, status=500)
 
 def buscar_exemplar(request):
     tombo = request.GET.get('tombo', '').strip()
@@ -739,7 +745,8 @@ def buscar_exemplar(request):
     except Exemplar.DoesNotExist:
         return JsonResponse({'erro': 'Exemplar físico não encontrado.'}, status=404)
     except Exception as e:
-        return JsonResponse({'erro': str(e)}, status=500)
+        logger.error(f"Erro na API buscar_exemplar: {e}", exc_info=True)
+        return JsonResponse({'erro': 'Ocorreu um erro interno ao buscar o exemplar físico.'}, status=500)
 
 def relatorio(request):
     query = request.GET.get('q')

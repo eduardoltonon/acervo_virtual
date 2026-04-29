@@ -1,0 +1,7 @@
+refactor: adoção de Django Forms, otimização de queries e segurança nas APIs
+
+- Criação do forms.py com LeitorForm, LivroCadastroForm, LeitorEditForm e LivroEditForm para centralizar a validação e limpeza de dados.
+- Refatoração massiva no views.py, substituindo o processamento manual de request.POST pelo uso elegante dos formulários.
+- Resolução do problema de N+1 queries nas views de estoque, leitores, reservas e multas (utilizando select_related, prefetch_related e Exists/OuterRef), melhorando drasticamente a performance.
+- Atualização dos modais em estoque.html e leitores.html e ajuste no script.js para o correto mapeamento dos campos com o back-end.
+- Melhoria de segurança nas APIs REST: implementação de logging de erros no servidor e padronização de mensagens no front-end para evitar vazamento de dados.
