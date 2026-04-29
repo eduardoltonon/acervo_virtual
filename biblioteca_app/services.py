@@ -72,3 +72,14 @@ def realizar_devolucao(emprestimo, data_entrega, valor_multa_paga, usuario):
         emprestimo.exemplar.save()
         
         return devolucao
+
+def renovar_emprestimo(emprestimo):
+    with transaction.atomic():
+        config = Configuracao.objects.first()
+        dias = config.dias_renovacao if config else 7
+        
+        # A nova data de devolução é a data atual prevista + os dias de renovação
+        emprestimo.data_devolucao = emprestimo.data_devolucao + timezone.timedelta(days=dias)
+        emprestimo.save()
+        
+        return emprestimo

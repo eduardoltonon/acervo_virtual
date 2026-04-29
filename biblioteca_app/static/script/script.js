@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function () {
             leitorNomeDisplay.style.color = 'inherit';
             leitorNomeDisplay.innerText = 'Buscando...';
 
-            fetch(`/api/leitor/buscar/?cpf=${cpf}`)
+            fetch(`${window.apiUrls.buscarLeitor}?cpf=${cpf}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.erro) throw new Error(data.erro);
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function () {
         tomboInput.addEventListener('change', () => {
             const tomboBusca = tomboInput.value.trim();
             if (tomboBusca) {
-                fetch(`/api/exemplar/buscar/?tombo=${encodeURIComponent(tomboBusca)}`)
+                fetch(`${window.apiUrls.buscarExemplar}?tombo=${encodeURIComponent(tomboBusca)}`)
                     .then(res => res.json())
                     .then(data => {
                         if (data.erro) throw new Error(data.erro);
@@ -431,6 +431,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Lógica para "Selecionar Tudo" na tela de Devolução/Renovação
+    const selectAllCheckbox = document.getElementById('select-all');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = this.checked);
+        });
+    }
 });
 
 

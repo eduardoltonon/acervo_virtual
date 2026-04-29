@@ -126,6 +126,7 @@ class Devolucao(models.Model):
 class Configuracao(models.Model):
     multa_por_dia = models.DecimalField(max_digits=5, decimal_places=2, default=2.50)
     limite_dias_emprestimo = models.PositiveIntegerField(default=14, help_text="Número máximo de dias para um empréstimo padrão.")
+    dias_renovacao = models.PositiveIntegerField(default=7, help_text="Quantidade de dias adicionados na renovação.")
 
     def __str__(self):
         return "Configurações do Sistema"

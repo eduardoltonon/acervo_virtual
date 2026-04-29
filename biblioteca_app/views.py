@@ -12,6 +12,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, get_user_model
+from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LogoutView
 from .decorators import admin_required
@@ -128,9 +129,11 @@ def excluir_usuario(request, user_id):
 def configuracao_multa(request):
     if request.method == 'POST' and request.POST.get('form-action') == 'salvar-multa':
         valor_multa_str = request.POST.get('multa-por-dia')
+        dias_renovacao = request.POST.get('dias-renovacao')
         if valor_multa_str:
             config, created = Configuracao.objects.get_or_create(pk=1)
             config.multa_por_dia = valor_multa_str
+            config.dias_renovacao = dias_renovacao or 7
             config.save()
             messages.success(request, 'Valor da multa atualizado com sucesso!')
         return redirect('configuracao_multa')
@@ -457,17 +460,46 @@ def emprestimo_com_livro(request, livro_id):
     return render(request, 'emprestimo.html', context)
 
 def reservas(request):
-    query = request.GET.get('q') 
+    if request.method == 'POST':
+        acao = request.POST.get('acao_massa')
+        ids_selecionados = request.POST.getlist('emprestimos_selecionados')
+        
+        if acao == 'renovar' and ids_selecionados:
+            sucessos = 0
+            for emp_id in ids_selecionados:
+                emp = get_object_or_404(Emprestimo, pk=emp_id)
+                services.renovar_emprestimo(emp)
+                sucessos += 1
+            messages.success(request, f'{sucessos} empréstimo(s) renovado(s) com sucesso.')
+            return redirect('reservas')
+        
+        elif acao == 'devolver' and ids_selecionados:
+            sucessos = 0
+            hoje = timezone.now().date()
+            for emp_id in ids_selecionados:
+                emp = get_object_or_404(Emprestimo, pk=emp_id)
+                services.realizar_devolucao(
+                    emprestimo=emp, data_entrega=hoje, 
+                    valor_multa_paga=0.00, usuario=request.user if request.user.is_authenticated else None
+                )
+                sucessos += 1
+            messages.success(request, f'{sucessos} empréstimo(s) devolvido(s) com sucesso.')
+            return redirect('reservas')
+
+    query = request.GET.get('q', '').strip()
     
     emprestimos_base = Emprestimo.objects.select_related('leitor', 'exemplar__livro').exclude(
         pk__in=Devolucao.objects.values('emprestimo_id')
     )
     
     if query:
+        # Busca por Título, Autor, Nome do Leitor, Matrícula (ID Leitor) ou Tombo
         emprestimos_ativos = emprestimos_base.filter(
             Q(exemplar__livro__titulo__icontains=query) |
             Q(exemplar__livro__autor__nome__icontains=query) |
-            Q(leitor__nome__icontains=query)
+            Q(leitor__nome__icontains=query) |
+            Q(leitor__id_leitor__icontains=query) |
+            Q(exemplar__codigo_tombo__icontains=query)
         ).order_by('data_devolucao')
     else:
         emprestimos_ativos = emprestimos_base.order_by('data_devolucao')
@@ -478,9 +510,13 @@ def reservas(request):
         valor_multa = _calcular_valor_multa(emprestimo, hoje)
         emprestimo.atrasado = valor_multa > 0
         emprestimo.valor_multa = f"{valor_multa:.2f}"
+        
+    paginator = Paginator(emprestimos_ativos, 15) # 15 itens por página
+    page_number = request.GET.get('page')
+    emprestimos_page = paginator.get_page(page_number)
 
     context = {
-        'emprestimos': emprestimos_ativos
+        'emprestimos': emprestimos_page
     }
     return render(request, 'reservas.html', context)
 

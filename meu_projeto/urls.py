@@ -53,6 +53,7 @@ urlpatterns = [
     path('api/livro/buscar_por_id/', views.buscar_livro_por_id, name='buscar_livro_por_id'),
     path('api/livro/completo/', views.buscar_livro_completo, name='buscar_livro_completo'),
     path('api/exemplar/buscar/', views.buscar_exemplar, name='buscar_exemplar'),
+    path('api/calcular_multa/', views.calcular_multa, name='calcular_multa'),
 
     # RECUPERAÇÃO DE SENHA
     path('reset-password/', auth_views.PasswordResetView.as_view(template_name="reset_password.html"), name="password_reset"),

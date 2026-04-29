@@ -171,6 +171,37 @@
         </div>
     </div>
 
+    <!-- PAGINAÇÃO -->
+    {% if livros.has_other_pages %}
+    <nav aria-label="Navegação de páginas" class="mt-4 mb-4">
+        <ul class="pagination justify-content-center shadow-sm">
+            {% if livros.has_previous %}
+                <li class="page-item">
+                    <a class="page-link text-primary" href="?page={{ livros.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if filtro %}&filtro={{ filtro }}{% endif %}">&laquo; Anterior</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
+            {% endif %}
+
+            {% for num in livros.paginator.page_range %}
+                {% if livros.number == num %}
+                    <li class="page-item active"><span class="page-link bg-primary border-primary text-dark fw-bold">{{ num }}</span></li>
+                {% elif num > livros.number|add:'-3' and num < livros.number|add:'3' %}
+                    <li class="page-item"><a class="page-link text-primary" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if filtro %}&filtro={{ filtro }}{% endif %}">{{ num }}</a></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if livros.has_next %}
+                <li class="page-item">
+                    <a class="page-link text-primary" href="?page={{ livros.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if filtro %}&filtro={{ filtro }}{% endif %}">Próxima &raquo;</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Próxima &raquo;</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
     <!-- MODAL EDIÇÃO -->
     <div class="modal fade" id="modal-edicao" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
